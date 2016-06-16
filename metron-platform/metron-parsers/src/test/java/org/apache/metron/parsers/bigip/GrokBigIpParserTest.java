@@ -173,7 +173,7 @@ public class GrokBigIpParserTest {
 		//Set up parser, parse message
 		GrokBigIpParser parser = new GrokBigIpParser();
 		parser.configure(parserConfig);
-		String testString = "<182>Mar 31 13:59:34 vdcbigaion01p info logger: [ssl_acc] 10.24.248.20 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670";
+		String testString = "<182>Mar 31 13:59:34 vdcbigaion01p info logger: [ssl_acc] 12.34.567.89 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670";
 		List<JSONObject> result = parser.parse(testString.getBytes());
 		JSONObject parsedJSON = result.get(0);
 
@@ -183,8 +183,8 @@ public class GrokBigIpParserTest {
 		assertEquals(parsedJSON.get("hostname").toString(), "vdcbigaion01p");
 		assertEquals(parsedJSON.get("severity").toString(), "info");
 		assertEquals(parsedJSON.get("big_ip_message_type").toString(), "system");
-		assertEquals(parsedJSON.get("message").toString(), "logger: [ssl_acc] 10.24.248.20 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670");
-		assertEquals(parsedJSON.get("original_string").toString(), "<182>Mar 31 13:59:34 vdcbigaion01p info logger: [ssl_acc] 10.24.248.20 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670");
+		assertEquals(parsedJSON.get("message").toString(), "logger: [ssl_acc] 12.34.567.89 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670");
+		assertEquals(parsedJSON.get("original_string").toString(), "<182>Mar 31 13:59:34 vdcbigaion01p info logger: [ssl_acc] 12.34.567.89 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670");
 	}
 
 	@Test
@@ -256,7 +256,7 @@ public class GrokBigIpParserTest {
 		//Set up parser, attempt to parse malformed message
 		GrokBigIpParser parser = new GrokBigIpParser();
 		parser.configure(parserConfig);
-		String testString = "<182>Mar 31 13:59:34 vdcbigaion01p info logger: [ssl_acc] 10.24.248.20 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670";
+		String testString = "<182>Mar 31 13:59:34 vdcbigaion01p info logger: [ssl_acc] 12.34.567.89 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670";
 		List<JSONObject> result = parser.parse(testString.getBytes());
 		JSONObject parsedJSON = result.get(0);
 
@@ -266,8 +266,8 @@ public class GrokBigIpParserTest {
 		assertEquals(parsedJSON.get("hostname").toString(), "vdcbigaion01p");
 		assertEquals(parsedJSON.get("severity").toString(), "info");
 		assertEquals(parsedJSON.get("big_ip_message_type").toString(), "system");
-		assertEquals(parsedJSON.get("message").toString(), "logger: [ssl_acc] 10.24.248.20 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670");
-		assertEquals(parsedJSON.get("original_string").toString(), "<182>Mar 31 13:59:34 vdcbigaion01p info logger: [ssl_acc] 10.24.248.20 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670");
+		assertEquals(parsedJSON.get("message").toString(), "logger: [ssl_acc] 12.34.567.89 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670");
+		assertEquals(parsedJSON.get("original_string").toString(), "<182>Mar 31 13:59:34 vdcbigaion01p info logger: [ssl_acc] 12.34.567.89 - admin [31/Mar/2016:13:59:34 +0000] \"/iControl/iControlPortal.cgi\" 200 670");
 
 	}
 	
