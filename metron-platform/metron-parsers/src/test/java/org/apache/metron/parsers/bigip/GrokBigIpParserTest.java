@@ -75,7 +75,7 @@ public class GrokBigIpParserTest {
 		//Set up parser, parse message
 		GrokBigIpParser parser = new GrokBigIpParser();
 		parser.configure(parserConfig);
-		String testString = "<141>Mar 31 13:46:35 mfugjchwna38k notice apd[6848]: 90329113:5: 1d0bf7c7: session.logon.euid is ABC906";
+		String testString = "<141>Mar 31 13:46:35 mfugjchwna38k notice apd[6848]: 90329113:5: 1d0bf7c7: session.logon.euid is bilbo";
 		List<JSONObject> result = parser.parse(testString.getBytes());
 		JSONObject parsedJSON = result.get(0);
 		 
@@ -90,8 +90,8 @@ public class GrokBigIpParserTest {
 		assertEquals(parsedJSON.get("big_ip_log_code").toString(), "90329113");
 		assertEquals(parsedJSON.get("big_ip_message_type").toString(), "login");
 		assertEquals(parsedJSON.get("vpn_session_id").toString(), "1d0bf7c7");
-		assertEquals(parsedJSON.get("user_id").toString(), "ABC906");
-		assertEquals(parsedJSON.get("original_string").toString(), "<141>Mar 31 13:46:35 mfugjchwna38k notice apd[6848]: 90329113:5: 1d0bf7c7: session.logon.euid is ABC906");
+		assertEquals(parsedJSON.get("user_id").toString(), "bilbo");
+		assertEquals(parsedJSON.get("original_string").toString(), "<141>Mar 31 13:46:35 mfugjchwna38k notice apd[6848]: 90329113:5: 1d0bf7c7: session.logon.euid is bilbo");
 	}
 	
 	@Test
@@ -203,7 +203,7 @@ public class GrokBigIpParserTest {
 		//Set up parser, attempt to parse malformed message
 		GrokBigIpParser parser = new GrokBigIpParser();
 		parser.configure(parserConfig);
-		String testString = "<141>Mar 31 13:46:35 mfugjchwna38k apd[6848]: 90329113:5: 1d0bf7c7: session.logon.euid is ABC906";
+		String testString = "<141>Mar 31 13:46:35 mfugjchwna38k apd[6848]: 90329113:5: 1d0bf7c7: session.logon.euid is bilbo";
 		List<JSONObject> result = parser.parse(testString.getBytes());
 		assertEquals(null, result);
 	}
