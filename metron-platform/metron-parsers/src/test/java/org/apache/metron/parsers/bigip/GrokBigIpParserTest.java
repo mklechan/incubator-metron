@@ -49,7 +49,7 @@ public class GrokBigIpParserTest {
 		//Set up parser, parse message
 		GrokBigIpParser parser = new GrokBigIpParser();
 		parser.configure(parserConfig);
-		String testString = "<141>Apr 19 19:24:29 mfugjchwna38k notice mdd4[6456]: 90329500:5: 37451372: New session from client IP 10.000.11.000 (ST=/CC=/C=) at VIP 240.61.45.23 Listener /Common/access.google.com_443 (Reputation=Unknown)";
+		String testString = "<141>Apr 19 19:24:29 mfugjchwna38k notice mdd4[6456]: 90329500:5: 37451372: New session from client IP 10.000.11.000 (ST=/CC=/C=) at VIP 123.45.67.89 Listener /Common/access.google.com_443 (Reputation=Unknown)";
 		List<JSONObject> result = parser.parse(testString.getBytes());
 		JSONObject parsedJSON = result.get(0);
 		
@@ -61,11 +61,11 @@ public class GrokBigIpParserTest {
 		assertEquals(parsedJSON.get("process").toString(), "mdd4");
 		assertEquals(parsedJSON.get("process_id").toString(), "6456");
 		assertEquals(parsedJSON.get("ip_src_addr").toString(), "10.000.11.000");
-		assertEquals(parsedJSON.get("ip_vip").toString(), "240.61.45.23");
+		assertEquals(parsedJSON.get("ip_vip").toString(), "123.45.67.89");
 		assertEquals(parsedJSON.get("big_ip_log_code").toString(), "90329500");
 		assertEquals(parsedJSON.get("big_ip_message_type").toString(), "session");
 		assertEquals(parsedJSON.get("vpn_session_id").toString(), "37451372");
-		assertEquals(parsedJSON.get("original_string").toString(), "<141>Apr 19 19:24:29 mfugjchwna38k notice mdd4[6456]: 90329500:5: 37451372: New session from client IP 10.000.11.000 (ST=/CC=/C=) at VIP 240.61.45.23 Listener /Common/access.google.com_443 (Reputation=Unknown)");
+		assertEquals(parsedJSON.get("original_string").toString(), "<141>Apr 19 19:24:29 mfugjchwna38k notice mdd4[6456]: 90329500:5: 37451372: New session from client IP 10.000.11.000 (ST=/CC=/C=) at VIP 123.45.67.89 Listener /Common/access.google.com_443 (Reputation=Unknown)");
 
 	}
 	
