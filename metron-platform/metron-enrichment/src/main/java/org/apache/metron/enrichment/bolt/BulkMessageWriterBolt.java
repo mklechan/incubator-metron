@@ -41,8 +41,6 @@ public class BulkMessageWriterBolt extends ConfiguredEnrichmentBolt {
           .getLogger(BulkMessageWriterBolt.class);
   private BulkMessageWriter<JSONObject> bulkMessageWriter;
   private BulkWriterComponent<JSONObject> writerComponent;
-  private boolean flush;
-  private Long flushIntervalInMs;
   public BulkMessageWriterBolt(String zookeeperUrl) {
     super(zookeeperUrl);
   }
@@ -56,8 +54,6 @@ public class BulkMessageWriterBolt extends ConfiguredEnrichmentBolt {
   @Override
   public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
     this.writerComponent = new BulkWriterComponent<>(collector);
-    this.writerComponent.setFlush(Boolean.getBoolean(getConfigurations().getGlobalConfig().get("flush").toString()));
-    this.writerComponent.setFlushIntervalInMs(Long.parseLong(getConfigurations().getGlobalConfig().get("flushIntervalInMs").toString()));
     super.prepare(stormConf, context, collector);
     try {
       bulkMessageWriter.init(stormConf, new EnrichmentWriterConfiguration(getConfigurations()));
