@@ -31,15 +31,15 @@ Logon Type:			3
 
 New Logon:
 
-	Security ID:		COF\ABC
+	Security ID:		TCB\ABC
 
 	Account Name:		ABC
 
-	Account Domain:		COF
+	Account Domain:		TCB
 
 	Logon ID:		0x4e149e04
 
-	Logon GUID:		{89C4AB77-51D6-D17B-3EAD-BC8676D1A4D2}
+	Logon GUID:		{TCB}
 
 
 
