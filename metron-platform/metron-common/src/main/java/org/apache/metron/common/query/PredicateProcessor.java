@@ -25,6 +25,9 @@ import com.google.common.cache.LoadingCache;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
+import org.apache.metron.common.dsl.ErrorListener;
+import org.apache.metron.common.dsl.ParseException;
+import org.apache.metron.common.dsl.VariableResolver;
 import org.apache.metron.common.query.generated.PredicateLexer;
 import org.apache.metron.common.query.generated.PredicateParser;
 
