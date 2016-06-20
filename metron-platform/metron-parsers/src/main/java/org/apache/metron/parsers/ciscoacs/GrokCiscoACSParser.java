@@ -19,27 +19,15 @@
 package org.apache.metron.parsers.ciscoacs;
 
 import org.apache.metron.parsers.GrokParser;
+import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.json.simple.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import oi.thekraken.grok.api.Match;
-
-
-import org.apache.metron.parsers.GrokParser;
-import org.json.simple.JSONObject;
-
-import java.text.ParseException;
-import java.util.Calendar;
-import java.util.Iterator;
 
 
 public class GrokCiscoACSParser  extends GrokParser {
@@ -89,12 +77,10 @@ public class GrokCiscoACSParser  extends GrokParser {
 
             JSONObject toReturn = message;
 
-            if(messageValue.substring(0,10).contains("Step"))
-            {
+            if(messageValue.substring(0,10).contains("Step")) {
                 format1(toReturn, messageValue);
             }
-            else
-            {
+            else {
                 format2(toReturn, messageValue);
             }
 
@@ -104,8 +90,7 @@ public class GrokCiscoACSParser  extends GrokParser {
         }
     }
 
-    private JSONObject format1(JSONObject toReturn, String messageValue)
-    {
+    private JSONObject format1(JSONObject toReturn, String messageValue) {
         try {
             // if url is in IP form, replace url tag with ip_src_addr
             if (toReturn.containsKey("url")) {
@@ -124,8 +109,8 @@ public class GrokCiscoACSParser  extends GrokParser {
 
             // Check first occurrences
             ArrayList<String> keys = new ArrayList<String>();
-            if( matcher.find() ){
-                keys.add(matcher.group().toString().substring(0,matcher.group().toString().length()-1));
+            if (matcher.find()) {
+                keys.add(matcher.group().toString().substring(0, matcher.group().toString().length() - 1));
             }
             //Check all occurrences
             pattern = Pattern.compile(",");
@@ -133,11 +118,10 @@ public class GrokCiscoACSParser  extends GrokParser {
             matcher = pattern.matcher(messageValue);
 
             while (matcher.find()) {
-                if(matcher.group().toString().equals(",timestamp=")){
+                if (matcher.group().toString().equals(",timestamp=")) {
                     keys.add("log_timestamp1");
-                }
-                else {
-                    keys.add(matcher.group().toString().substring(0,matcher.group().toString().length()-1));
+                } else {
+                    keys.add(matcher.group().toString().substring(0, matcher.group().toString().length() - 1));
                 }
             }
 
@@ -153,97 +137,84 @@ public class GrokCiscoACSParser  extends GrokParser {
                 String[] pairArray = fields[i].split("=");
                 String[] subPairArray;
 
-                if("Step".equals(pairArray[0].replaceAll("\\s+", "")))
-                {
+                if ("Step".equals(pairArray[0].replaceAll("\\s+", ""))) {
                     stepCounter++;
-                    steps.put((pairArray[0]+""+stepCounter).replaceAll("\\s+", ""),pairArray[1].replaceAll("\\s+", ""));
+                    steps.put((pairArray[0] + "" + stepCounter).replaceAll("\\s+", ""), pairArray[1].replaceAll("\\s+", ""));
                 }
-                if("CmdSet".equals(pairArray[0].replaceAll("\\s+", "")))
-                {
+                if ("CmdSet".equals(pairArray[0].replaceAll("\\s+", ""))) {
                     String cmdSet = fields[i].substring(fields[i].indexOf("["));
                     subPairArray = cmdSet.split(" ");
                     String[] innerPairArray;
 
                     int cmdArgAVCcounter = 0;
 
-                    for(int z = 0; z < subPairArray.length; z++)
-                    {
-                        if(subPairArray[z].contains("="))
-                        {
+                    for (int z = 0; z < subPairArray.length; z++) {
+                        if (subPairArray[z].contains("=")) {
                             innerPairArray = subPairArray[z].split("=");
-
-                            if("CmdArgAV".equals(innerPairArray[0].replaceAll("\\s+", "")))
-                            {
-                                cmdArgAV.put((innerPairArray[0]+""+cmdArgAVCcounter).replaceAll("\\s+", ""),innerPairArray[1].replaceAll("\\s+", ""));
+                            if ("CmdArgAV".equals(innerPairArray[0].replaceAll("\\s+", ""))) {
+                                cmdArgAV.put((innerPairArray[0] + "" + cmdArgAVCcounter).replaceAll("\\s+", ""), innerPairArray[1].replaceAll("\\s+", ""));
                                 cmdArgAVCcounter++;
                             }
 
-                            newPairs.put(innerPairArray[0].replaceAll("\\s+", ""),innerPairArray[1].replaceAll("\\s+", ""));
+                            newPairs.put(innerPairArray[0].replaceAll("\\s+", ""), innerPairArray[1].replaceAll("\\s+", ""));
                         }
                     }
-                    newPairs.put(pairArray[0].replaceAll("\\s+", ""),cmdSet.replaceAll("\\s+", ""));
+                    newPairs.put(pairArray[0].replaceAll("\\s+", ""), cmdSet.replaceAll("\\s+", ""));
                 }
-                if("Response".equals(pairArray[0].replaceAll("\\s+", "")))
-                {
-                    String cmdSet = fields[i].substring(fields[i].indexOf("{")+1);
+                if ("Response".equals(pairArray[0].replaceAll("\\s+", ""))) {
+                    String cmdSet = fields[i].substring(fields[i].indexOf("{") + 1);
                     subPairArray = cmdSet.split(";");
                     String[] innerPairArray;
 
                     int cmdArgAVCcounter = 0;
 
-                    for(int z = 0; z < subPairArray.length; z++)
-                    {
-                        if(subPairArray[z].contains("="))
-                        {
+                    for (int z = 0; z < subPairArray.length; z++) {
+                        if (subPairArray[z].contains("=")) {
                             innerPairArray = subPairArray[z].split("=");
 
-                            if("Type".equals(innerPairArray[0].replaceAll("\\s+", "")))
-                            {
-                                cmdArgAV.put((innerPairArray[0]+""+cmdArgAVCcounter).replaceAll("\\s+", ""),innerPairArray[1].replaceAll("\\s+", ""));
+                            if ("Type".equals(innerPairArray[0].replaceAll("\\s+", ""))) {
+                                cmdArgAV.put((innerPairArray[0] + "" + cmdArgAVCcounter).replaceAll("\\s+", ""), innerPairArray[1].replaceAll("\\s+", ""));
                                 cmdArgAVCcounter++;
                             }
-                            if("Author-Reply-Status".equals(innerPairArray[0].replaceAll("\\s+", "")))
-                            {
-                                cmdArgAV.put((innerPairArray[0]+""+cmdArgAVCcounter).replaceAll("\\s+", ""),innerPairArray[1].replaceAll("\\s+", ""));
+                            if ("Author-Reply-Status".equals(innerPairArray[0].replaceAll("\\s+", ""))) {
+                                cmdArgAV.put((innerPairArray[0] + "" + cmdArgAVCcounter).replaceAll("\\s+", ""), innerPairArray[1].replaceAll("\\s+", ""));
                                 cmdArgAVCcounter++;
                             }
 
-                            newPairs.put(innerPairArray[0].replaceAll("\\s+", ""),innerPairArray[1].replaceAll("\\s+", ""));
+                            newPairs.put(innerPairArray[0].replaceAll("\\s+", ""), innerPairArray[1].replaceAll("\\s+", ""));
                         }
                     }
-                    newPairs.put(pairArray[0].replaceAll("\\s+", ""),cmdSet.replaceAll("\\s+", ""));
-                }
-                else
-                {
-                    newPairs.put(pairArray[0].replaceAll("\\s+", ""),pairArray[1].replaceAll("\\s+", ""));
+                    newPairs.put(pairArray[0].replaceAll("\\s+", ""), cmdSet.replaceAll("\\s+", ""));
+                } else {
+                    newPairs.put(pairArray[0].replaceAll("\\s+", ""), pairArray[1].replaceAll("\\s+", ""));
                 }
             }
 
-            newPairs.put("Response",cmdArgAV.toJSONString());
-            newPairs.put("Steps",steps.toJSONString());
+            newPairs.put("Response", cmdArgAV.toJSONString());
+            newPairs.put("Steps", steps.toJSONString());
 
             Set set = newPairs.entrySet();
             // Get an iterator
             Iterator i = set.iterator();
             // Display elements
-            while(i.hasNext()) {
-                Map.Entry me = (Map.Entry)i.next();
+            while (i.hasNext()) {
+                Map.Entry me = (Map.Entry) i.next();
                 if (me.getValue() != null || me.getValue().toString().length() != 0) {
                     if ("Steps".equals(me.getKey().toString())) {
                         toReturn.put("Steps", steps);
                     } else {
                         toReturn.put((me.getKey().toString()).replaceAll("\\s+", ""), (me.getValue().toString()).replaceAll("\\s+", "")); // add the field and value
                     }
-                }else {
+                } else {
                     toReturn.put((me.getKey().toString()), "EMPTY_FIELD");   // there was no value for this field
                 }
             }
 
             toReturn.remove("messageGreedy"); // remove message. If something goes wrong, the message is preserved within the original_string
-        } catch (Exception e) {
-            LOGGER.error("ParseException when trying to parse date");
-        }
 
+        } catch (Exception e) {
+            LOGGER.error("Exception while adding: " + messageValue, e);
+        }
         return toReturn;
     }
 
@@ -267,7 +238,7 @@ public class GrokCiscoACSParser  extends GrokParser {
 
             // Check first occurrences
             ArrayList<String> keys = new ArrayList<String>();
-            if( matcher.find() ){
+            if( matcher.find() ) {
                 keys.add(matcher.group().toString().substring(0,matcher.group().toString().length()-1));
             }
             //Check all occurrences
@@ -332,27 +303,22 @@ public class GrokCiscoACSParser  extends GrokParser {
                 String[] pairArray = fields[i].split("=");
                 String[] subPairArray;
 
-                if("Step".equals(pairArray[0].replaceAll("\\s+", "")))
-                {
+                if("Step".equals(pairArray[0].replaceAll("\\s+", ""))) {
                     stepCounter++;
                     steps.put((pairArray[0]+""+stepCounter).replaceAll("\\s+", ""),pairArray[1].replaceAll("\\s+", ""));
                 }
-                if("CmdSet".equals(pairArray[0].replaceAll("\\s+", "")))
-                {
+                if("CmdSet".equals(pairArray[0].replaceAll("\\s+", ""))) {
                     String cmdSet = fields[i].substring(fields[i].indexOf("["));
                     subPairArray = cmdSet.split(" ");
                     String[] innerPairArray;
 
                     int cmdArgAVCcounter = 0;
 
-                    for(int z = 0; z < subPairArray.length; z++)
-                    {
-                        if(subPairArray[z].contains("="))
-                        {
+                    for(int z = 0; z < subPairArray.length; z++) {
+                        if(subPairArray[z].contains("=")) {
                             innerPairArray = subPairArray[z].split("=");
 
-                            if("CmdArgAV".equals(innerPairArray[0].replaceAll("\\s+", "")))
-                            {
+                            if("CmdArgAV".equals(innerPairArray[0].replaceAll("\\s+", ""))) {
                                 cmdArgAV.put((innerPairArray[0]+""+cmdArgAVCcounter).replaceAll("\\s+", ""),innerPairArray[1].replaceAll("\\s+", ""));
                                 cmdArgAVCcounter++;
                             }
@@ -362,27 +328,22 @@ public class GrokCiscoACSParser  extends GrokParser {
                     }
                     newPairs.put(pairArray[0].replaceAll("\\s+", ""),cmdSet.replaceAll("\\s+", ""));
                 }
-                if("Response".equals(pairArray[0].replaceAll("\\s+", "")))
-                {
+                if("Response".equals(pairArray[0].replaceAll("\\s+", ""))) {
                     String cmdSet = fields[i].substring(fields[i].indexOf("{")+1);
                     subPairArray = cmdSet.split(";");
                     String[] innerPairArray;
 
                     int cmdArgAVCcounter = 0;
 
-                    for(int z = 0; z < subPairArray.length; z++)
-                    {
-                        if(subPairArray[z].contains("="))
-                        {
+                    for(int z = 0; z < subPairArray.length; z++) {
+                        if(subPairArray[z].contains("=")) {
                             innerPairArray = subPairArray[z].split("=");
 
-                            if("Type".equals(innerPairArray[0].replaceAll("\\s+", "")))
-                            {
+                            if("Type".equals(innerPairArray[0].replaceAll("\\s+", ""))) {
                                 cmdArgAV.put((innerPairArray[0]+""+cmdArgAVCcounter).replaceAll("\\s+", ""),innerPairArray[1].replaceAll("\\s+", ""));
                                 cmdArgAVCcounter++;
                             }
-                            if("Author-Reply-Status".equals(innerPairArray[0].replaceAll("\\s+", "")))
-                            {
+                            if("Author-Reply-Status".equals(innerPairArray[0].replaceAll("\\s+", ""))) {
                                 cmdArgAV.put((innerPairArray[0]+""+cmdArgAVCcounter).replaceAll("\\s+", ""),innerPairArray[1].replaceAll("\\s+", ""));
                                 cmdArgAVCcounter++;
                             }
@@ -392,8 +353,7 @@ public class GrokCiscoACSParser  extends GrokParser {
                     }
                     newPairs.put(pairArray[0].replaceAll("\\s+", ""),cmdSet.replaceAll("\\s+", ""));
                 }
-                else
-                {
+                else {
                     newPairs.put(pairArray[0].replaceAll("\\s+", ""),pairArray[1].replaceAll("\\s+", ""));
                 }
             }
@@ -413,14 +373,14 @@ public class GrokCiscoACSParser  extends GrokParser {
                     } else {
                         toReturn.put((me.getKey().toString()).replaceAll("\\s+", ""), (me.getValue().toString()).replaceAll("\\s+", "")); // add the field and value
                     }
-                }else {
+                } else {
                     toReturn.put((me.getKey().toString()), "EMPTY_FIELD");   // there was no value for this field
                 }
             }
 
             toReturn.remove("messageGreedy"); // remove message. If something goes wrong, the message is preserved within the original_string
         } catch (Exception e) {
-            LOGGER.error("ParseException when trying to parse date");
+            LOGGER.error("Exception while adding: " + messageValue, e);
         }
 
         return toReturn;
