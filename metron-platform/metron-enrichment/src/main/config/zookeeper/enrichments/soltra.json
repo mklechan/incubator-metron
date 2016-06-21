@@ -4,5 +4,9 @@
   "enrichment" : {
   },
   "threatIntel": {
+  },
+  "configuration": {
+    "indexName": "soltra",
+    "elasticSearchID": "ID"
   }
 }

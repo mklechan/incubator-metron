@@ -52,8 +52,6 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
   private static final Logger LOG = LoggerFactory
           .getLogger(ElasticsearchWriter.class);
   private FieldNameConverter fieldNameConverter = new ElasticsearchFieldNameConverter();
-  private boolean changeID = false;
-  private String elasticSearchId;
 
   public ElasticsearchWriter withOptionalSettings(Map<String, String> optionalSettings) {
     this.optionalSettings = optionalSettings;
@@ -165,9 +163,10 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
       if(ts != null) {
         indexRequestBuilder = indexRequestBuilder.setTimestamp(ts.toString());
       }
-      if(changeID){
-        indexRequestBuilder.setId((String)message.get(elasticSearchId));
+      if(configurations.getSensorConfig(sensorType).containsKey("elasticSearchID")){
+        indexRequestBuilder.setId((String)message.get((String)configurations.getSensorConfig(sensorType).get("elasticSearchID")));
       }
+
       bulkRequest.add(indexRequestBuilder);
 
     }
@@ -206,11 +205,6 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
 
   @Override
   public void configure(String sensorName, WriterConfiguration configuration) {
-    Map<String, Object> sensorConfiguration = configuration.getSensorConfig(sensorName);
-    if(sensorConfiguration.containsKey("elasticSearchID")){
-      changeID = true;
-      elasticSearchId = (String)sensorConfiguration.get("elasticSearchID");
-    }
 
   }
 }
