@@ -1,0 +1,18 @@
+{
+  "parserClassName":"org.apache.metron.parsers.aruba.GrokArubaParser",
+  "sensorTopic":"aruba",
+  "parserConfig":
+  {
+    "grokPath":"/patterns/aruba",
+    "patternLabel":"ARUBA",
+    "dateFormat":"yyyy-MM-dd HH:mm:ss"
+  },
+  "fieldTransformations" : [
+    {
+      "input" : "timestamp",
+      "transformation": "TRANSFORM_TO_UTC_EPOCH",
+      "config":
+      { "timeZone":"America/New_York" }
+    }
+  ]
+}
