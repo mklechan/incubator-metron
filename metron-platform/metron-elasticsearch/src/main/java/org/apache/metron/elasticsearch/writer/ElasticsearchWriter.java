@@ -71,9 +71,7 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
     settingsBuilder.put("client.transport.ping_timeout","500s");
 
     if (optionalSettings != null) {
-
       settingsBuilder.put(optionalSettings);
-
     }
 
     Settings settings = settingsBuilder.build();
@@ -235,21 +233,18 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
 
         JSONObject esDoc = new JSONObject();
         for(Object k : message.keySet()){
-
           deDot(k.toString(),message,esDoc);
-
         }
 
-        IndexRequestBuilder indexRequestBuilder = client.prepareIndex(indexName,
-                sensorType + "_doc");
+        IndexRequestBuilder indexRequestBuilder = client.prepareIndex(indexName, sensorType + "_doc");
 
         indexRequestBuilder = indexRequestBuilder.setSource(esDoc.toJSONString());
         Object ts = esDoc.get("timestamp");
         if(ts != null) {
           indexRequestBuilder = indexRequestBuilder.setTimestamp(ts.toString());
         }
-        if(changeID){
-          indexRequestBuilder.setId((String)message.get(elasticSearchId));
+        if(configurations.getSensorConfig(sensorType).containsKey("elasticSearchID")){
+          indexRequestBuilder.setId((String)message.get((String)configurations.getSensorConfig(sensorType).get("elasticSearchID")));
         }
         bulkRequest.add(indexRequestBuilder);
 
