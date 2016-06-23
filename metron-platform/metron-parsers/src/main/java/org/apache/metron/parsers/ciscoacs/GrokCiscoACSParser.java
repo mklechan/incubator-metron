@@ -34,9 +34,6 @@ public class GrokCiscoACSParser  extends GrokParser {
 
     protected DateFormat dateFormat;
 
-    protected String DATE_FORMAT;
-    protected int TIMEZONE_OFFSET;
-
     private static final long serialVersionUID = 1297186928520950925L;
     private static final Logger LOGGER = LoggerFactory
             .getLogger(GrokCiscoACSParser.class);
@@ -55,8 +52,7 @@ public class GrokCiscoACSParser  extends GrokParser {
     }
 
     @SuppressWarnings("unchecked")
-    private void removeEmptyFields(JSONObject json)
-    {
+    private void removeEmptyFields(JSONObject json) {
         Iterator<Object> keyIter = json.keySet().iterator();
         while (keyIter.hasNext()) {
             Object key = keyIter.next();
@@ -68,8 +64,7 @@ public class GrokCiscoACSParser  extends GrokParser {
     }
 
     @Override
-    protected void postParse(JSONObject message)
-    {
+    protected void postParse(JSONObject message) {
         removeEmptyFields(message);
         message.remove("timestamp_string");
         if (message.containsKey("messageGreedy")) {
@@ -213,13 +208,12 @@ public class GrokCiscoACSParser  extends GrokParser {
             toReturn.remove("messageGreedy"); // remove message. If something goes wrong, the message is preserved within the original_string
 
         } catch (Exception e) {
-            LOGGER.error("Exception while adding: " + messageValue, e);
+            LOGGER.error("Exception while adding: " + toReturn.get("original_String"), e);
         }
         return toReturn;
     }
 
-    private JSONObject format2(JSONObject toReturn, String messageValue)
-    {
+    private JSONObject format2(JSONObject toReturn, String messageValue) {
         try {
             // if url is in IP form, replace url tag with ip_src_addr
             if (toReturn.containsKey("url")) {
@@ -380,7 +374,7 @@ public class GrokCiscoACSParser  extends GrokParser {
 
             toReturn.remove("messageGreedy"); // remove message. If something goes wrong, the message is preserved within the original_string
         } catch (Exception e) {
-            LOGGER.error("Exception while adding: " + messageValue, e);
+            LOGGER.error("Exception while adding: " + toReturn.get("original_string"), e);
         }
 
         return toReturn;
