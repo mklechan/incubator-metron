@@ -43,6 +43,7 @@ public class BulkWriterComponent<MESSAGE_T> {
   private boolean flush;
   private long totalESWaitTime=0;
   private long lastESRun=0;
+  private int currentBatchSize=0;
 
   public BulkWriterComponent(OutputCollector collector) {
     this.collector = collector;
@@ -110,6 +111,7 @@ public class BulkWriterComponent<MESSAGE_T> {
   {
 
     int batchSize;
+    currentBatchSize++;
 
     if(configurations.getGlobalConfig().get(Constants.GLOBAL_BATCH_SIZE)!=null)
       batchSize= Integer.parseInt(configurations.getGlobalConfig().get(Constants.GLOBAL_BATCH_SIZE).toString());
@@ -139,8 +141,9 @@ public class BulkWriterComponent<MESSAGE_T> {
     if ((flush && (System.currentTimeMillis() >= currentTime + flushIntervalInMs))) {
       flushAllSensorTypes(bulkMessageWriter, configurations);
       LOG.trace("Flushing due to timeout. flushIntervalInMs"+flushIntervalInMs);
-    } else if ((tupleList.size() >= batchSize)) {
+    } else if ((currentBatchSize >= batchSize)) {
       flushAllSensorTypes(bulkMessageWriter, configurations);
+      currentBatchSize=0;
       //sensorTupleMap.remove(sensorType);
     } else {
       sensorTupleMap.put(sensorType, tupleList);
