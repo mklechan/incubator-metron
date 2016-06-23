@@ -27,13 +27,18 @@ public class Constants {
   public static final long DEFAULT_CONFIGURED_BOLT_TIMEOUT = 5000;
   public static final String SENSOR_TYPE = "source.type";
   public static final String ENRICHMENT_TOPIC = "enrichments";
+  public static final String DEFAULT_PARSER_ERROR_TOPIC = "parser_error";
+  public static final String DEFAULT_PARSER_INVALID_TOPIC = "parser_invalid";
   public static final String ERROR_STREAM = "error";
   public static final String INVALID_STREAM = "invalid";
   public static final String SIMPLE_HBASE_ENRICHMENT = "hbaseEnrichment";
   public static final String SIMPLE_HBASE_THREAT_INTEL = "hbaseThreatIntel";
+  public static final String FLUSH_INTERVAL_IN_MS = "flushIntervalInMs";
+  public static final String FLUSH_FLAG = "flush";
+  public static final String GLOBAL_BATCH_SIZE = "globalBatchSize";
 
   public static enum Fields {
-     SRC_ADDR("ip_src_addr")
+    SRC_ADDR("ip_src_addr")
     ,SRC_PORT("ip_src_port")
     ,DST_ADDR("ip_dst_addr")
     ,DST_PORT("ip_dst_port")

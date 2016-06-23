@@ -25,6 +25,7 @@ import org.apache.metron.common.configuration.writer.WriterConfiguration;
 import org.apache.metron.common.interfaces.BulkMessageWriter;
 import org.apache.metron.common.interfaces.MessageWriter;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -50,5 +51,10 @@ public class WriterToBulkWriter<MESSAGE_T> implements BulkMessageWriter<MESSAGE_
   @Override
   public void close() throws Exception {
     messageWriter.close();
+  }
+
+  @Override
+  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap) throws Exception {
+    throw new Exception("Method not implemented");
   }
 }
