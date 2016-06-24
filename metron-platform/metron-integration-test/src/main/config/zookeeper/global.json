@@ -8,6 +8,7 @@
   "solr.numShards": 1,
   "solr.replicationFactor": 1,
   "globalBatchSize": 5000,
+  "globalFlushFlag": true,
   "fieldValidations" : [
     {
        "input" : [ "src_ip_addr", "dst_ip_addr"]

@@ -24,7 +24,10 @@ import com.google.common.collect.Iterables;
 import org.apache.metron.common.Constants;
 import org.apache.metron.common.configuration.writer.WriterConfiguration;
 import org.apache.metron.common.interfaces.BulkMessageWriter;
+import org.apache.metron.common.interfaces.MessageWriter;
 import org.apache.metron.common.utils.ErrorUtils;
+import org.apache.metron.common.utils.MessageUtils;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,88 +105,42 @@ public class BulkWriterComponent<MESSAGE_T> {
     sensorTupleMap.remove(sensorType);
     //  sensorMessageMap.remove(sensorType);
   }
-  public void write( String sensorType
-          , Tuple tuple
-          , MESSAGE_T message
-          , BulkMessageWriter<MESSAGE_T> bulkMessageWriter
-          , WriterConfiguration configurations
-  ) throws Exception
+  public void write( String sensorType, Tuple tuple, MESSAGE_T message, BulkMessageWriter<MESSAGE_T> bulkMessageWriter, WriterConfiguration configurations) throws Exception
   {
 
-    int batchSize;
-    currentBatchSize++;
-
-    if(configurations.getGlobalConfig().get(Constants.GLOBAL_BATCH_SIZE)!=null)
-      batchSize= Integer.parseInt(configurations.getGlobalConfig().get(Constants.GLOBAL_BATCH_SIZE).toString());
-    else
-      batchSize=configurations.getBatchSize(sensorType);
-
+    int batchSize = configurations.getBatchSize(sensorType);
     Collection<Tuple> tupleList = sensorTupleMap.get(sensorType);
     if (tupleList == null) {
       tupleList = createTupleCollection();
     }
     tupleList.add(tuple);
-//    List<MESSAGE_T> messageList = sensorMessageMap.get(sensorType);
-//    if (messageList == null) {
-//      messageList = new ArrayList<>();
-//    }
 
-    if(configurations.getGlobalConfig()!=null&&configurations.getGlobalConfig().get(Constants.FLUSH_FLAG)!=null)
-    {
-      this.setFlush(Boolean.getBoolean(configurations.getGlobalConfig().get(Constants.FLUSH_FLAG).toString()));
-      if(configurations.getGlobalConfig().get(Constants.FLUSH_INTERVAL_IN_MS)!=null)
-      {
-        this.setFlushIntervalInMs(Long.parseLong(configurations.getGlobalConfig().get(Constants.FLUSH_INTERVAL_IN_MS).toString()));
-        LOG.trace("Setting time based flushing FLUSH_INTERVAL_IN_MS to "+configurations.getGlobalConfig().get(Constants.FLUSH_INTERVAL_IN_MS).toString());
-      }
-    }
-    //  messageList.add(message);
-    if ((flush && (System.currentTimeMillis() >= currentTime + flushIntervalInMs))) {
-      flushAllSensorTypes(bulkMessageWriter, configurations);
-      LOG.trace("Flushing due to timeout. flushIntervalInMs"+flushIntervalInMs);
-    } else if ((currentBatchSize >= batchSize)) {
-      flushAllSensorTypes(bulkMessageWriter, configurations);
-      currentBatchSize=0;
-      //sensorTupleMap.remove(sensorType);
+    if ((tupleList.size() >= batchSize)) {
+      flush(sensorType, bulkMessageWriter, configurations, tupleList, tupleToJsonMessage(tupleList));
+      sensorTupleMap.remove(sensorType);
     } else {
       sensorTupleMap.put(sensorType, tupleList);
-      //  sensorMessageMap.put(sensorType, messageList);
     }
+  }
+
+  private List<MESSAGE_T> tupleToJsonMessage(Collection<Tuple> tupleList) {
+    List<MESSAGE_T> msgList=new ArrayList<>(tupleList.size());
+    for(Tuple tuple: tupleList){
+      msgList.add((MESSAGE_T) tuple.getValueByField("message"));
+    }
+    return msgList;
   }
 
   private void flushAllSensorTypes (BulkMessageWriter<MESSAGE_T> bulkMessageWriter, WriterConfiguration configurations) throws Exception {
-    Iterator<Entry<String, Collection<Tuple>>> iterator=sensorTupleMap.entrySet().iterator();
 
-    String sensrorType = null;
-    while (iterator.hasNext()) {
-      try {
-        sensrorType=iterator.next().getKey();
-        if(flush(bulkMessageWriter, configurations, sensorTupleMap)){
-          iterator.remove();
-          LOG.debug("Flushing tuples for sensrorType:"+sensrorType+" tuples:"+sensorTupleMap.get(sensrorType).size());
-        }
-      } catch (Exception e) {
-        LOG.warn("Exception thrown while flushing senson type " + sensrorType, e);
-        LOG.warn("Continuing with next sensor type");
-      }
-    }
-    if (flush) {
-      currentTime = System.currentTimeMillis();
-    }
-  }
-
-  private boolean flush(BulkMessageWriter<MESSAGE_T> bulkMessageWriter, WriterConfiguration configurations,
-                        Map<String, Collection<Tuple>> sensorTupleMap2) throws Exception {
-
-    boolean flushed=false;
     try {
       lastESRun=System.currentTimeMillis();
       bulkMessageWriter.write(configurations, sensorTupleMap);
       LOG.debug("ES flush time:"+(System.currentTimeMillis()-lastESRun));
       totalESWaitTime=totalESWaitTime+System.currentTimeMillis()-lastESRun;
       LOG.debug("ES total flush time:"+totalESWaitTime );
+      LOG.debug("Flushed tuples for all sensorTypes. currentBatchSize:"+ currentBatchSize);
 
-      flushed=true;
       if(handleCommit) {
         Iterator<Entry<String, Collection<Tuple>>> iterator=sensorTupleMap.entrySet().iterator();
         while(iterator.hasNext()){
@@ -210,16 +167,20 @@ public class BulkWriterComponent<MESSAGE_T> {
         sensorTupleMap.get(iterator.next().getKey()).clear();
       }
     }
-    return flushed;
 
+    if (flush) {
+      currentTime = System.currentTimeMillis();
+    }
   }
+
+
 
   private boolean flush(String sensorType, BulkMessageWriter<MESSAGE_T> bulkMessageWriter, WriterConfiguration configurations, Collection<Tuple> tupleList,
                         List<MESSAGE_T> messageList ) throws Exception {
     boolean flushed=false;
     try {
       lastESRun=System.currentTimeMillis();
-      bulkMessageWriter.write(configurations, sensorTupleMap);
+      bulkMessageWriter.write(sensorType, configurations, tupleList, messageList);
       LOG.debug("ES flush time:"+(System.currentTimeMillis()-lastESRun));
       totalESWaitTime=totalESWaitTime+System.currentTimeMillis()-lastESRun;
       LOG.debug("ES total flush time:"+totalESWaitTime );
@@ -242,4 +203,49 @@ public class BulkWriterComponent<MESSAGE_T> {
     }
     return flushed;
   }
+
+  public void write(String sensorType,Tuple tuple
+          , BulkMessageWriter<MESSAGE_T> bulkMessageWriter
+          , WriterConfiguration configurations){
+    int batchSize;
+    currentBatchSize++;
+    batchSize = Integer.parseInt(configurations.getGlobalConfig().get(Constants.GLOBAL_BATCH_SIZE).toString());
+
+    Collection<Tuple> tupleList = sensorTupleMap.get(sensorType);
+    if (tupleList == null)
+    {
+      tupleList = createTupleCollection();
+    }
+    tupleList.add(tuple);
+    if(configurations.getGlobalConfig()!=null&&configurations.getGlobalConfig().get(Constants.FLUSH_FLAG)!=null)
+    {
+      this.setFlush(Boolean.getBoolean(configurations.getGlobalConfig().get(Constants.FLUSH_FLAG).toString()));
+      if (configurations.getGlobalConfig().get(Constants.FLUSH_INTERVAL_IN_MS) != null)
+      {
+        this.setFlushIntervalInMs(Long.parseLong(configurations.getGlobalConfig().get(Constants.FLUSH_INTERVAL_IN_MS).toString()));
+        LOG.trace("Setting time based flushing FLUSH_INTERVAL_IN_MS to " + configurations.getGlobalConfig().get(Constants.FLUSH_INTERVAL_IN_MS).toString());
+      }
+    }
+
+    if (currentBatchSize >= batchSize || (flush && (System.currentTimeMillis() >= currentTime + flushIntervalInMs))){
+      if (flush && (System.currentTimeMillis() >= currentTime + flushIntervalInMs)) {
+        LOG.trace("Flushing due to timeout. flushIntervalInMs" + flushIntervalInMs);
+      }
+
+      try {
+        flushAllSensorTypes(bulkMessageWriter, configurations);
+        currentBatchSize = 0;
+      } catch (Exception e) {
+        LOG.debug("Exception while flushing all messages" + e.getMessage());
+      }
+    }
+    else {
+      sensorTupleMap.put(sensorType, tupleList);
+
+    }
+
+  }
+
 }
+
+

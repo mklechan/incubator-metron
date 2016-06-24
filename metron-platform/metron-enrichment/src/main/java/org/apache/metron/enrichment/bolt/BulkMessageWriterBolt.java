@@ -43,6 +43,12 @@ private static final Logger LOG = LoggerFactory
   private BulkMessageWriter<JSONObject> bulkMessageWriter;
   private BulkWriterComponent<JSONObject> writerComponent;
 
+  public void setGlobalFlush(boolean globalFlush) {
+    this.globalFlush = globalFlush;
+  }
+
+  private boolean globalFlush=false;
+
   public BulkMessageWriterBolt(String zookeeperUrl) {
     super(zookeeperUrl);
   }
@@ -57,15 +63,13 @@ private static final Logger LOG = LoggerFactory
     this.writerComponent = new BulkWriterComponent<>(collector);	
     super.prepare(stormConf, context, collector);
     try {
-    	if(getConfigurations().getGlobalConfig()!=null&&getConfigurations().getGlobalConfig().get(Constants.FLUSH_FLAG)!=null)
-        {
-        	this.writerComponent.setFlush(Boolean.getBoolean(getConfigurations().getGlobalConfig().get(Constants.FLUSH_FLAG).toString()));
-        	LOG.debug("Setting time based flushing to "+getConfigurations().getGlobalConfig().get(Constants.FLUSH_FLAG).toString());
-        	if(getConfigurations().getGlobalConfig().get(Constants.FLUSH_INTERVAL_IN_MS)!=null)
-            	this.writerComponent.setFlushIntervalInMs(Long.parseLong(getConfigurations().getGlobalConfig().get(Constants.FLUSH_INTERVAL_IN_MS).toString()));
-        }
-    	
       bulkMessageWriter.init(stormConf, new EnrichmentWriterConfiguration(getConfigurations()));
+      if(getConfigurations().getGlobalConfig()!=null&&getConfigurations().getGlobalConfig().get(Constants.GLOBAL_FLUSH_FLAG)!=null)
+      {
+        globalFlush=Boolean.parseBoolean(getConfigurations().getGlobalConfig().get(Constants.GLOBAL_FLUSH_FLAG).toString());
+        LOG.debug("Setting global flushing to "+getConfigurations().getGlobalConfig().get(Constants.GLOBAL_FLUSH_FLAG).toString());
+
+      }
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -78,7 +82,10 @@ private static final Logger LOG = LoggerFactory
     String sensorType = MessageUtils.getSensorType(message);
     try
     {
-      writerComponent.write(sensorType, tuple, message, bulkMessageWriter, new EnrichmentWriterConfiguration(getConfigurations()));
+      if(globalFlush)
+        writerComponent.write(sensorType, tuple,  bulkMessageWriter, new EnrichmentWriterConfiguration(getConfigurations()));
+      else
+        writerComponent.write(sensorType, tuple, message, bulkMessageWriter, new EnrichmentWriterConfiguration(getConfigurations()));
     }
     catch(Exception e) {
       throw new RuntimeException("This should have been caught in the writerComponent.  If you see this, file a JIRA", e);

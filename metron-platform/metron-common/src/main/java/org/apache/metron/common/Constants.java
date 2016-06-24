@@ -36,6 +36,7 @@ public class Constants {
   public static final String FLUSH_INTERVAL_IN_MS = "flushIntervalInMs";
   public static final String FLUSH_FLAG = "flush";
   public static final String GLOBAL_BATCH_SIZE = "globalBatchSize";
+  public static final String GLOBAL_FLUSH_FLAG = "globalFlushFlag";
 
   public static enum Fields {
     SRC_ADDR("ip_src_addr")

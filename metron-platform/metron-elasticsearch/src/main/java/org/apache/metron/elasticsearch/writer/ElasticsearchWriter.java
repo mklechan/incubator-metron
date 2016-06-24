@@ -22,6 +22,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.metron.common.Constants;
 import org.apache.metron.common.configuration.EnrichmentConfigurations;
 import org.apache.metron.common.configuration.enrichment.SensorEnrichmentConfig;
 import org.apache.metron.common.configuration.writer.WriterConfiguration;
@@ -69,7 +70,7 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
     Settings.Builder settingsBuilder = Settings.settingsBuilder();
     settingsBuilder.put("cluster.name", globalConfiguration.get("es.clustername"));
     settingsBuilder.put("client.transport.ping_timeout","500s");
-
+    configurations.getGlobalConfig().put(Constants.GLOBAL_BATCH_SIZE,true);
     if (optionalSettings != null) {
       settingsBuilder.put(optionalSettings);
     }

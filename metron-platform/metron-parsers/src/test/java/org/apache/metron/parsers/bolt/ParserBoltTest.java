@@ -156,6 +156,7 @@ public class ParserBoltTest extends BaseBoltTest {
       add(sampleMessage2);
     }};
     when(tuple.getBinary(0)).thenReturn(sampleBinary);
+    when(tuple.getValueByField("message")).thenReturn((JSONObject) jsonParser.parse("{ \"field1\":\"value1\", \"ingest_timestamp\":0 \"source.type\":\"" + sensorType + "\" }"));
     when(parser.parseOptional(sampleBinary)).thenReturn(Optional.of(messages));
     when(parser.validate(eq(messages.get(0)))).thenReturn(true);
     when(parser.validate(eq(messages.get(1)))).thenReturn(false);
@@ -169,7 +170,9 @@ public class ParserBoltTest extends BaseBoltTest {
     when(filter.emitTuple(messages.get(0))).thenReturn(false);
     when(filter.emitTuple(messages.get(1))).thenReturn(true);
     parserBolt.withMessageFilter(filter);
-    parserBolt.execute(tuple);
+    when(tuple.getValueByField("message")).thenReturn((JSONObject) jsonParser.parse("{ \"field2\":\"value2\", \"ingest_timestamp\":0 \"source.type\":\"" + sensorType + "\" }"));
+
+      parserBolt.execute(tuple);
     verify(writer, times(1)).write(eq(sensorType), any(ParserWriterConfiguration.class), eq(tuple), eq(finalMessage2));
     verify(outputCollector, times(2)).ack(tuple);
     doThrow(new Exception()).when(writer).write(eq(sensorType), any(ParserWriterConfiguration.class), eq(tuple), eq(finalMessage2));

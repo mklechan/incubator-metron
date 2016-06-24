@@ -118,6 +118,7 @@ public class BulkMessageWriterBoltTest extends BaseEnrichmentBoltTest {
     bulkMessageWriterBolt.getConfigurations().updateGlobalConfig(new FileInputStream(sampleSensorEnrichmentConfigPath));
 
     bulkMessageWriterBolt.declareOutputFields(declarer);
+    bulkMessageWriterBolt.setGlobalFlush(false);
     verify(declarer, times(1)).declareStream(eq("error"), argThat(new FieldsMatcher("message")));
     Map stormConf = new HashMap();
     doThrow(new Exception()).when(bulkMessageWriter).init(eq(stormConf), any(WriterConfiguration.class));
@@ -127,7 +128,6 @@ public class BulkMessageWriterBoltTest extends BaseEnrichmentBoltTest {
     } catch(RuntimeException e) {}
     reset(bulkMessageWriter);
     bulkMessageWriterBolt.prepare(stormConf, topologyContext, outputCollector);
-
     verify(bulkMessageWriter, times(1)).init(eq(stormConf), any(WriterConfiguration.class));
     tupleList = new ArrayList<>();
     for(int i = 0; i < 4; i++) {
@@ -139,10 +139,10 @@ public class BulkMessageWriterBoltTest extends BaseEnrichmentBoltTest {
     when(tuple.getValueByField("message")).thenReturn(messageList.get(4));
     tupleList.add(tuple);
     bulkMessageWriterBolt.execute(tuple);
-    verify(bulkMessageWriter, times(1)).write( any(WriterConfiguration.class), any(Map.class));
+    verify(bulkMessageWriter, times(1)).write(eq(sensorType), any(WriterConfiguration.class), eq(tupleList), Matchers.anyListOf(JSONObject.class));
     verify(outputCollector, times(5)).ack(tuple);
     reset(outputCollector);
-    doThrow(new Exception()).when(bulkMessageWriter).write( any(WriterConfiguration.class), any(Map.class));
+    doThrow(new Exception()).when(bulkMessageWriter).write(eq(sensorType), any(WriterConfiguration.class), Matchers.anyListOf(Tuple.class), Matchers.anyListOf(JSONObject.class));
     when(tuple.getValueByField("message")).thenReturn(messageList.get(0));
     for(int i = 0; i < 5; i++) {
       bulkMessageWriterBolt.execute(tuple);
