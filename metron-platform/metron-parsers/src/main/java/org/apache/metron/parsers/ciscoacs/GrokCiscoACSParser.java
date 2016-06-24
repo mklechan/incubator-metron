@@ -34,9 +34,6 @@ public class GrokCiscoACSParser  extends GrokParser {
 
     protected DateFormat dateFormat;
 
-    protected String DATE_FORMAT;
-    protected int TIMEZONE_OFFSET;
-
     private static final long serialVersionUID = 1297186928520950925L;
     private static final Logger LOGGER = LoggerFactory
             .getLogger(GrokCiscoACSParser.class);
@@ -55,8 +52,7 @@ public class GrokCiscoACSParser  extends GrokParser {
     }
 
     @SuppressWarnings("unchecked")
-    private void removeEmptyFields(JSONObject json)
-    {
+    private void removeEmptyFields(JSONObject json) {
         Iterator<Object> keyIter = json.keySet().iterator();
         while (keyIter.hasNext()) {
             Object key = keyIter.next();
@@ -68,8 +64,7 @@ public class GrokCiscoACSParser  extends GrokParser {
     }
 
     @Override
-    protected void postParse(JSONObject message)
-    {
+    protected void postParse(JSONObject message) {
         removeEmptyFields(message);
         message.remove("timestamp_string");
         if (message.containsKey("messageGreedy")) {
@@ -213,13 +208,12 @@ public class GrokCiscoACSParser  extends GrokParser {
             toReturn.remove("messageGreedy"); // remove message. If something goes wrong, the message is preserved within the original_string
 
         } catch (Exception e) {
-            LOGGER.error("Exception while adding: " + messageValue, e);
+            LOGGER.error("Exception while adding: " + toReturn.get("original_String"), e);
         }
         return toReturn;
     }
 
-    private JSONObject format2(JSONObject toReturn, String messageValue)
-    {
+    private JSONObject format2(JSONObject toReturn, String messageValue) {
         try {
             // if url is in IP form, replace url tag with ip_src_addr
             if (toReturn.containsKey("url")) {
@@ -380,27 +374,10 @@ public class GrokCiscoACSParser  extends GrokParser {
 
             toReturn.remove("messageGreedy"); // remove message. If something goes wrong, the message is preserved within the original_string
         } catch (Exception e) {
-            LOGGER.error("Exception while adding: " + messageValue, e);
+            LOGGER.error("Exception while adding: " + toReturn.get("original_string"), e);
         }
 
         return toReturn;
-    }
-
-    /**
-     * Adds the current timestamp so we know when the file was ingested
-     * @param parsedJSON the json that the parser created
-     */
-    private void addIngestTimestamp(JSONObject parsedJSON){
-        parsedJSON.put("ingest_timestamp", System.currentTimeMillis());
-    }
-
-    /**
-     * Adds the source type of the log
-     * @param parsedJSON the json that the parser created
-     * @param sourceType The source type of the log
-     */
-    private void addSourceType(JSONObject parsedJSON, String sourceType) {
-        parsedJSON.put("source_type", sourceType);
     }
 
     /**
@@ -411,9 +388,6 @@ public class GrokCiscoACSParser  extends GrokParser {
     protected void cleanJSON(JSONObject parsedJSON, String sourceType) {
         removeEmptyAndNullKeys(parsedJSON);
         removeUnwantedKey(parsedJSON);
-        //addIngestTimestamp(parsedJSON);
-        //timestampCheck(sourceType, parsedJSON);
-        //addSourceType(parsedJSON, sourceType);
     }
 
     /**
@@ -437,49 +411,6 @@ public class GrokCiscoACSParser  extends GrokParser {
             if (null == value || "".equals(value.toString())) {
                 keyIter.remove();
             }
-        }
-    }
-
-    /**
-     * Checks if a timestamp key exists. If it does not, it creates one.
-     * @param parsedJSON the json the parser created
-     */
-    private void timestampCheck(String sourceType, JSONObject parsedJSON) {
-        if (!parsedJSON.containsKey("timestamp")) {
-            parsedJSON.put("timestamp", System.currentTimeMillis());
-            //parsedJSON.put("device_generated_timestamp", parsedJSON.get("timestamp"));
-        }
-        else {
-            if (parsedJSON.get("timestamp") instanceof String){
-                long longTimestamp = 0;
-                try {
-                    longTimestamp = Long.parseLong( (String) parsedJSON.get("timestamp"));
-                } catch (NumberFormatException e) {
-                    LOGGER.error("Unable to parse a long from the timestamp field.", e);
-                }
-                parsedJSON.put("timestamp", longTimestamp);
-            }
-            convertTimezoneToUTC(sourceType, parsedJSON);
-        }
-    }
-
-    /**
-     * Checks if a timestamp key exists. If it does not, it creates one.
-     * Converts the timezone to UTC based on the value in the timezone map
-     * @param parsedJSON the json the parser created
-     */
-    private void convertTimezoneToUTC(String sourceType, JSONObject parsedJSON) {
-        parsedJSON.put("device_generated_timestamp", parsedJSON.get("timestamp"));
-        long newTimestamp = (long) parsedJSON.get("timestamp");
-        if (TIMEZONE_OFFSET != 24) {
-            newTimestamp = newTimestamp + (TIMEZONE_OFFSET * 3600000);
-            parsedJSON.put("timestamp", newTimestamp);
-        }
-        else {
-            long timeDifference = (long) parsedJSON.get("ingest_timestamp") - (long) parsedJSON.get("device_generated_timestamp");
-            long estimateOffset = timeDifference/3600000;
-            newTimestamp = newTimestamp + (estimateOffset * 3600000);
-            parsedJSON.put("timestamp", newTimestamp);
         }
     }
 }
