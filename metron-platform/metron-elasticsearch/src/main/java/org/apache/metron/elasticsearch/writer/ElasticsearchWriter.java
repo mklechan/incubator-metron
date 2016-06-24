@@ -70,7 +70,7 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
     Settings.Builder settingsBuilder = Settings.settingsBuilder();
     settingsBuilder.put("cluster.name", globalConfiguration.get("es.clustername"));
     settingsBuilder.put("client.transport.ping_timeout","500s");
-    configurations.getGlobalConfig().put(Constants.GLOBAL_BATCH_SIZE,true);
+    configurations.getGlobalConfig().put(Constants.GLOBAL_FLUSH_FLAG,true);
     if (optionalSettings != null) {
       settingsBuilder.put(optionalSettings);
     }
@@ -219,7 +219,8 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
     Iterator<Entry<String, Collection<Tuple>>> iterator=sensorTupleMap.entrySet().iterator();
 
     while(iterator.hasNext()){
-      for(Tuple tuple: sensorTupleMap.get(iterator.next())) {
+
+      for(Tuple tuple: sensorTupleMap.get(iterator.next().getKey())) {
 
         JSONObject message =(JSONObject)tuple.getValueByField("message");
         String sensorType = MessageUtils.getSensorType(message);
