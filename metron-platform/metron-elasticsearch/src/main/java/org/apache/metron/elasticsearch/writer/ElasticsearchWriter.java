@@ -70,7 +70,7 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
     Settings.Builder settingsBuilder = Settings.settingsBuilder();
     settingsBuilder.put("cluster.name", globalConfiguration.get("es.clustername"));
     settingsBuilder.put("client.transport.ping_timeout","500s");
-    configurations.getGlobalConfig().put(Constants.GLOBAL_FLUSH_FLAG,true);
+    configurations.getGlobalConfig().put(Constants.GLOBAL_FLUSH_FLAG,"true");
     if (optionalSettings != null) {
       settingsBuilder.put(optionalSettings);
     }
@@ -87,7 +87,6 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
 
 
     } catch (UnknownHostException exception){
-
       throw new RuntimeException(exception);
     }
 
@@ -219,38 +218,44 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
     Iterator<Entry<String, Collection<Tuple>>> iterator=sensorTupleMap.entrySet().iterator();
 
     while(iterator.hasNext()){
+      Collection<Tuple> list=iterator.next().getValue();
+      if(list!=null&&list.size()>0){
+        for(Tuple tuple:list ) {
 
-      for(Tuple tuple: sensorTupleMap.get(iterator.next().getKey())) {
+          JSONObject message =(JSONObject)tuple.getValueByField("message");
+          String sensorType = MessageUtils.getSensorType(message);
 
-        JSONObject message =(JSONObject)tuple.getValueByField("message");
-        String sensorType = MessageUtils.getSensorType(message);
+          String indexName = sensorType;
 
-        String indexName = sensorType;
+          if (configurations != null) {
+            indexName = configurations.getIndex(sensorType);
+          }
 
-        if (configurations != null) {
-          indexName = configurations.getIndex(sensorType);
+          indexName = indexName + "_index_" + indexPostfix;
+
+          JSONObject esDoc = new JSONObject();
+          for(Object k : message.keySet()){
+            deDot(k.toString(),message,esDoc);
+          }
+
+          IndexRequestBuilder indexRequestBuilder = client.prepareIndex(indexName, sensorType + "_doc");
+
+          indexRequestBuilder = indexRequestBuilder.setSource(esDoc.toJSONString());
+          Object ts = esDoc.get("timestamp");
+          if(ts != null) {
+            indexRequestBuilder = indexRequestBuilder.setTimestamp(ts.toString());
+          }
+          if(configurations.getSensorConfig(sensorType).containsKey("elasticSearchID")){
+            indexRequestBuilder.setId((String)message.get((String)configurations.getSensorConfig(sensorType).get("elasticSearchID")));
+          }
+          bulkRequest.add(indexRequestBuilder);
+
         }
-
-        indexName = indexName + "_index_" + indexPostfix;
-
-        JSONObject esDoc = new JSONObject();
-        for(Object k : message.keySet()){
-          deDot(k.toString(),message,esDoc);
-        }
-
-        IndexRequestBuilder indexRequestBuilder = client.prepareIndex(indexName, sensorType + "_doc");
-
-        indexRequestBuilder = indexRequestBuilder.setSource(esDoc.toJSONString());
-        Object ts = esDoc.get("timestamp");
-        if(ts != null) {
-          indexRequestBuilder = indexRequestBuilder.setTimestamp(ts.toString());
-        }
-        if(configurations.getSensorConfig(sensorType).containsKey("elasticSearchID")){
-          indexRequestBuilder.setId((String)message.get((String)configurations.getSensorConfig(sensorType).get("elasticSearchID")));
-        }
-        bulkRequest.add(indexRequestBuilder);
-
       }
+      else{
+        LOG.debug("Got empty or null list");
+      }
+
     }
 
     BulkResponse resp = bulkRequest.execute().actionGet();

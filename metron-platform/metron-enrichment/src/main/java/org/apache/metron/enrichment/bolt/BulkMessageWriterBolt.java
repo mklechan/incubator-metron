@@ -67,7 +67,7 @@ private static final Logger LOG = LoggerFactory
       if(getConfigurations().getGlobalConfig()!=null&&getConfigurations().getGlobalConfig().get(Constants.GLOBAL_FLUSH_FLAG)!=null)
       {
         globalFlush=Boolean.parseBoolean(getConfigurations().getGlobalConfig().get(Constants.GLOBAL_FLUSH_FLAG).toString());
-        LOG.debug("Setting global flushing to "+getConfigurations().getGlobalConfig().get(Constants.GLOBAL_FLUSH_FLAG).toString());
+        LOG.info("Setting global flushing to "+getConfigurations().getGlobalConfig().get(Constants.GLOBAL_FLUSH_FLAG).toString());
 
       }
     } catch (Exception e) {
@@ -75,17 +75,20 @@ private static final Logger LOG = LoggerFactory
     }
   }
 
-
   @Override
   public void execute(Tuple tuple) {
     JSONObject message =(JSONObject)tuple.getValueByField("message");
     String sensorType = MessageUtils.getSensorType(message);
     try
     {
-      if(globalFlush)
+      if(globalFlush){
         writerComponent.write(sensorType, tuple,  bulkMessageWriter, new EnrichmentWriterConfiguration(getConfigurations()));
-      else
+        LOG.trace("Writing msg for global flushing");
+      }
+      else{
         writerComponent.write(sensorType, tuple, message, bulkMessageWriter, new EnrichmentWriterConfiguration(getConfigurations()));
+        LOG.trace("Writing msg for per sensor flushing");
+        }
     }
     catch(Exception e) {
       throw new RuntimeException("This should have been caught in the writerComponent.  If you see this, file a JIRA", e);
