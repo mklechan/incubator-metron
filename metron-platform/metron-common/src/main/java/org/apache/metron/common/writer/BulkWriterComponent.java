@@ -235,8 +235,8 @@ public class BulkWriterComponent<MESSAGE_T> {
         flushAllSensorTypes(bulkMessageWriter, configurations);
 
       } catch (Exception e) {
-        LOG.debug("Exception while flushing all messages" + e.getMessage());
-        LOG.debug("Sensor Type "+sensorType+" currentBatchSize " +currentBatchSize);
+        LOG.debug("Exception while flushing all messages: " + e.getMessage()+" Sensor Type "+sensorType+" currentBatchSize " +currentBatchSize);
+        throw e;
       }
     }
 
