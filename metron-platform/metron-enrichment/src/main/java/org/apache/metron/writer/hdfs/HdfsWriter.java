@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
 
 public class HdfsWriter implements BulkMessageWriter<JSONObject>, Serializable {
   List<RotationAction> rotationActions = new ArrayList<>();
@@ -92,5 +93,10 @@ public class HdfsWriter implements BulkMessageWriter<JSONObject>, Serializable {
       sourceHandlerMap.put(sourceType, ret);
     }
     return ret;
+  }
+
+  @Override
+  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap) throws Exception {
+    throw new Exception("Method not implemented");
   }
 }

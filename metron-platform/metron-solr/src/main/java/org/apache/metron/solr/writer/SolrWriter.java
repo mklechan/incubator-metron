@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
 
 public class SolrWriter implements BulkMessageWriter<JSONObject>, Serializable {
 
@@ -108,5 +109,10 @@ public class SolrWriter implements BulkMessageWriter<JSONObject>, Serializable {
   @Override
   public void close() throws Exception {
     solr.close();
+  }
+
+  @Override
+  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap) throws Exception {
+    throw new Exception("Method not implemented");
   }
 }

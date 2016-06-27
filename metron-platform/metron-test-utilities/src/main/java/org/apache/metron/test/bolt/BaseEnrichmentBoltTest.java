@@ -30,6 +30,7 @@ import java.util.Set;
 public class BaseEnrichmentBoltTest extends BaseBoltTest {
 
   public String sampleSensorEnrichmentConfigPath = TestConstants.SAMPLE_CONFIG_PATH + "enrichments/test.json";
+  public String sampleGlobalJson = TestConstants.SAMPLE_CONFIG_PATH + "/global.json";
   protected Set<String> streamIds = new HashSet<>();
   protected String key = "someKey";
   protected String sensorType = "test";

@@ -279,4 +279,10 @@ public class SimpleHbaseEnrichmentWriter extends AbstractWriter implements BulkM
       }
     }
   }
+
+  @Override
+  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap) throws Exception {
+    throw new Exception("Method not implemented");
+  }
+
 }
