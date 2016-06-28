@@ -24,10 +24,7 @@ import com.google.common.collect.Iterables;
 import org.apache.metron.common.Constants;
 import org.apache.metron.common.configuration.writer.WriterConfiguration;
 import org.apache.metron.common.interfaces.BulkMessageWriter;
-import org.apache.metron.common.interfaces.MessageWriter;
 import org.apache.metron.common.utils.ErrorUtils;
-import org.apache.metron.common.utils.MessageUtils;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,7 +129,7 @@ public class BulkWriterComponent<MESSAGE_T> {
 
     try {
       lastESRun=System.currentTimeMillis();
-      bulkMessageWriter.write(configurations, sensorTupleMap);
+      bulkMessageWriter.write(configurations, sensorTupleMap,collector );
       LOG.debug("ES flush time:"+(System.currentTimeMillis()-lastESRun));
       totalESWaitTime=totalESWaitTime+System.currentTimeMillis()-lastESRun;
       LOG.debug("ES total flush time:"+totalESWaitTime );
@@ -174,9 +171,9 @@ public class BulkWriterComponent<MESSAGE_T> {
     try {
       lastESRun=System.currentTimeMillis();
       bulkMessageWriter.write(sensorType, configurations, tupleList, messageList);
-      LOG.debug("ES flush time:"+(System.currentTimeMillis()-lastESRun));
+      LOG.debug("ES flush time "+(System.currentTimeMillis()-lastESRun));
       totalESWaitTime=totalESWaitTime+System.currentTimeMillis()-lastESRun;
-      LOG.debug("ES total flush time:"+totalESWaitTime );
+      LOG.debug("ES total flush time "+totalESWaitTime );
 
       flushed=true;
       if(handleCommit) {
@@ -206,7 +203,6 @@ public class BulkWriterComponent<MESSAGE_T> {
 
     try{
       batchSize = Integer.parseInt(configurations.getGlobalConfig().get(Constants.GLOBAL_BATCH_SIZE).toString());
-      LOG.trace("Setting globalBatchSize to "+batchSize);
     }catch (Exception e){
       throw new Exception("Set globalBatchSize in zookeeper global.json");
     }
@@ -233,9 +229,9 @@ public class BulkWriterComponent<MESSAGE_T> {
     if (currentBatchSize >= batchSize || (flush && (System.currentTimeMillis() >= (lastFlushTime + flushIntervalInMs)))){
       try {
         flushAllSensorTypes(bulkMessageWriter, configurations);
-
+        LOG.trace("GlobalBatchSize: "+batchSize);
       } catch (Exception e) {
-        LOG.debug("Exception while flushing all messages: " + e.getMessage()+" Sensor Type "+sensorType+" currentBatchSize " +currentBatchSize);
+        LOG.error("Exception while flushing all messages: " + e.getMessage()+" Sensor Type "+sensorType+" currentBatchSize " +currentBatchSize);
         throw e;
       }
     }

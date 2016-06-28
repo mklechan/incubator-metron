@@ -17,6 +17,7 @@
  */
 package org.apache.metron.common.interfaces;
 
+import backtype.storm.task.OutputCollector;
 import backtype.storm.tuple.Tuple;
 import org.apache.metron.common.configuration.writer.WriterConfiguration;
 
@@ -33,6 +34,6 @@ public interface BulkMessageWriter<MESSAGE_T> extends AutoCloseable, Serializabl
             , Iterable<Tuple> tuples
             , List<MESSAGE_T> messages
     ) throws Exception;
-    void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap) throws Exception;
+    void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap, OutputCollector outputCollector) throws Exception;
 
 }

@@ -17,9 +17,8 @@
  */
 package org.apache.metron.solr.writer;
 
+import backtype.storm.task.OutputCollector;
 import backtype.storm.tuple.Tuple;
-import org.apache.metron.common.configuration.Configurations;
-import org.apache.metron.common.configuration.EnrichmentConfigurations;
 import org.apache.metron.common.configuration.writer.WriterConfiguration;
 import org.apache.metron.common.interfaces.BulkMessageWriter;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -112,7 +111,7 @@ public class SolrWriter implements BulkMessageWriter<JSONObject>, Serializable {
   }
 
   @Override
-  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap) throws Exception {
+  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap, OutputCollector outputCollector) throws Exception {
     throw new Exception("Method not implemented");
   }
 }
