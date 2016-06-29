@@ -18,17 +18,14 @@
 
 package org.apache.metron.writer.hbase;
 
+import backtype.storm.task.OutputCollector;
 import backtype.storm.tuple.Tuple;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.metron.common.configuration.Configurations;
-import org.apache.metron.common.configuration.ParserConfigurations;
-import org.apache.metron.common.configuration.writer.ParserWriterConfiguration;
 import org.apache.metron.common.configuration.writer.WriterConfiguration;
 import org.apache.metron.common.interfaces.BulkMessageWriter;
 import org.apache.metron.common.utils.ConversionUtils;
@@ -37,16 +34,13 @@ import org.apache.metron.common.writer.AbstractWriter;
 import org.apache.metron.enrichment.converter.EnrichmentConverter;
 import org.apache.metron.enrichment.converter.EnrichmentKey;
 import org.apache.metron.enrichment.converter.EnrichmentValue;
-import org.apache.metron.enrichment.converter.HbaseConverter;
 import org.apache.metron.hbase.HTableProvider;
 import org.apache.metron.hbase.TableProvider;
 import org.json.simple.JSONObject;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SimpleHbaseEnrichmentWriter extends AbstractWriter implements BulkMessageWriter<JSONObject>, Serializable {
@@ -281,7 +275,7 @@ public class SimpleHbaseEnrichmentWriter extends AbstractWriter implements BulkM
   }
 
   @Override
-  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap) throws Exception {
+  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap, OutputCollector outputCollector) throws Exception {
     throw new Exception("Method not implemented");
   }
 

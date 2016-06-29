@@ -18,6 +18,7 @@
 
 package org.apache.metron.common.writer;
 
+import backtype.storm.task.OutputCollector;
 import backtype.storm.tuple.Tuple;
 import com.google.common.collect.Iterables;
 import org.apache.metron.common.configuration.writer.SingleBatchConfigurationFacade;
@@ -54,7 +55,7 @@ public class WriterToBulkWriter<MESSAGE_T> implements BulkMessageWriter<MESSAGE_
   }
 
   @Override
-  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap) throws Exception {
+  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap, OutputCollector outputCollector) throws Exception {
     throw new Exception("Method not implemented");
   }
 }

@@ -17,14 +17,13 @@
  */
 package org.apache.metron.enrichment.bolt;
 
+import backtype.storm.task.OutputCollector;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import org.adrianwalker.multilinestring.Multiline;
 import org.apache.metron.common.Constants;
-import org.apache.metron.common.configuration.EnrichmentConfigurations;
 import org.apache.metron.common.configuration.writer.WriterConfiguration;
 import org.apache.metron.test.bolt.BaseEnrichmentBoltTest;
-import org.apache.metron.common.configuration.Configurations;
 import org.apache.metron.common.interfaces.BulkMessageWriter;
 import org.hamcrest.Description;
 import org.json.simple.JSONObject;
@@ -195,7 +194,7 @@ public class BulkMessageWriterBoltTest extends BaseEnrichmentBoltTest {
       tupleList.add(tuple);
       bulkMessageWriterBolt.execute(tuple);
       verify(bulkMessageWriter, times(0)).write(eq(sensorType), any(WriterConfiguration.class), eq(tupleList), eq(messageList));
-      verify(bulkMessageWriter, times(0)).write(any(WriterConfiguration.class), Matchers.anyMap());
+      verify(bulkMessageWriter, times(0)).write(any(WriterConfiguration.class), Matchers.anyMap(), any(OutputCollector.class));
     }
 
     tupleList2 = new ArrayList<>();
@@ -206,7 +205,7 @@ public class BulkMessageWriterBoltTest extends BaseEnrichmentBoltTest {
       tupleList2.add(tuple);
       bulkMessageWriterBolt.execute(tuple);
       verify(bulkMessageWriter, times(0)).write(eq("test2"), any(WriterConfiguration.class), eq(tupleList2), eq(messageList));
-      verify(bulkMessageWriter, times(0)).write(any(WriterConfiguration.class),  Matchers.anyMap());
+      verify(bulkMessageWriter, times(0)).write(any(WriterConfiguration.class),  Matchers.anyMap(),any(OutputCollector.class) );
     }
 
     when(tuple.getValueByField("message")).thenReturn(messageList.get(8));
@@ -215,10 +214,10 @@ public class BulkMessageWriterBoltTest extends BaseEnrichmentBoltTest {
     tupleMap.put("test2",tupleList2);
 
     bulkMessageWriterBolt.execute(tuple);
-    verify(bulkMessageWriter, times(1)).write(any(WriterConfiguration.class), Matchers.anyMap());
+    verify(bulkMessageWriter, times(1)).write(any(WriterConfiguration.class), Matchers.anyMap(), any(OutputCollector.class));
     verify(outputCollector, times(9)).ack(tuple);
     reset(outputCollector);
-    doThrow(new Exception()).when(bulkMessageWriter).write(any(WriterConfiguration.class),Matchers.anyMap());
+    doThrow(new Exception()).when(bulkMessageWriter).write(any(WriterConfiguration.class),Matchers.anyMap(),any(OutputCollector.class) );
     when(tuple.getValueByField("message")).thenReturn(messageList.get(0));
     for(int i = 0; i < 9; i++) {
       bulkMessageWriterBolt.execute(tuple);
