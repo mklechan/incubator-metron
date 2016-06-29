@@ -33,6 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class BulkMessageWriterBolt extends ConfiguredEnrichmentBolt {
@@ -79,6 +81,12 @@ private static final Logger LOG = LoggerFactory
   public void execute(Tuple tuple) {
     JSONObject message =(JSONObject)tuple.getValueByField("message");
     String sensorType = MessageUtils.getSensorType(message);
+
+    //adding indexingBoltTimetamp for debugging.
+    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    Date date = new Date();
+    message.put(getClass().getSimpleName().toLowerCase() + ".indexingbolt.ts",dateFormat.format(date));
+
     try
     {
       if(globalFlush){
