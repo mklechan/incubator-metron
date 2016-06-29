@@ -51,6 +51,10 @@ public class GrokCiscoACSParserTest {
         List<JSONObject> result = parser.parse(testString.getBytes());
         JSONObject parsedJSON = result.get(0);
 
+        for (Object o : parsedJSON.keySet()) {
+            System.out.println(o.toString() + ": " + parsedJSON.get(o));
+        }
+
         //Compare fields
         assertEquals(parsedJSON.get("priority") + "", "181");
         assertEquals(parsedJSON.get("hostname"), "MDCNMSACS002");
@@ -59,4 +63,32 @@ public class GrokCiscoACSParserTest {
         assertEquals(parsedJSON.get("messageID"), 107266148);
         assertEquals(parsedJSON.get("totalSegments"), 1);
     }
+
+    @Test
+    public void testLine() {
+        GrokCiscoACSParser parser = new GrokCiscoACSParser();
+        parser.configure(parserConfig);
+        String testString = "<181>Jun 27 02:10:35 MDCNMSACS002 CSCOacs_Failed_Attempts 0165597030 7 3  AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, AD-Error-Details=Domain trust is one-way, StepData=19=pix, StepData=20=cof.ds.capitalone.com, StepData=21=ds.capitalone.com, StepData=22=PRODCOAFDMZ.LOCAL\\,Domain trust is one-way, StepData=23=MAIN.CORP.INT\\,Domain trust is one-way, StepData=24=psv.capitalone.com\\,Domain trust is one-way,";
+        List<JSONObject> result = parser.parse(testString.getBytes());
+        JSONObject parsedJSON = result.get(0);
+
+        for (Object o : parsedJSON.keySet()) {
+            System.out.println(o.toString() + ": " + parsedJSON.get(o));
+        }
+    }
+
+    @Test
+    public void testLine2() {
+        GrokCiscoACSParser parser = new GrokCiscoACSParser();
+        parser.configure(parserConfig);
+        String testString = "<181>Jun 27 02:10:36 MDCNMSACS003 CSCOacs_Passed_Authentications 0000303972 11 10  memberOf=CN=All Associates - Richmond4\\,OU=Distribution Lists\\,OU=USADCUsers\\,OU=Exchange\\,DC=cof\\,DC=ds\\,DC=capitalone\\,DC=com, Response={Type=Authorization; Author-Reply-Status=PassAdd; }";
+        List<JSONObject> result = parser.parse(testString.getBytes());
+        JSONObject parsedJSON = result.get(0);
+
+        for (Object o : parsedJSON.keySet()) {
+            System.out.println(o.toString() + ": " + parsedJSON.get(o));
+        }
+
+    }
+
 }
