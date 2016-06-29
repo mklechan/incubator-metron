@@ -224,9 +224,9 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
       if(list!=null&&list.size()>0){
         for(Tuple tuple:list ) {
           String sensorType="";
-
+          JSONObject message=null;
           try {
-            JSONObject message = (JSONObject) tuple.getValueByField("message");
+             message= (JSONObject) tuple.getValueByField("message");
             sensorType= MessageUtils.getSensorType(message);
 
             if (sensorType != null) {
@@ -256,8 +256,8 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
               bulkRequest.add(indexRequestBuilder);
             }
           }catch(Exception e){
-            LOG.error("Error while adding index for sensor "+sensorType);
-            ErrorUtils.handleError(outputCollector,e,Constants.ERROR_STREAM);
+            LOG.error("Error while adding index for sensor "+sensorType+" msg: "+message);
+           // ErrorUtils.handleError(outputCollector,e,Constants.ERROR_STREAM);
           }
         }
       }
