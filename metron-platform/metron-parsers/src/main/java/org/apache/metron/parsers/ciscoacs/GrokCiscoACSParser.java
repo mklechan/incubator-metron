@@ -51,7 +51,6 @@ public class GrokCiscoACSParser  extends GrokParser {
         return epochTimestamp;
     }
 
-    @SuppressWarnings("unchecked")
     private void removeEmptyFields(JSONObject json) {
         Iterator<Object> keyIter = json.keySet().iterator();
         while (keyIter.hasNext()) {
@@ -80,7 +79,7 @@ public class GrokCiscoACSParser  extends GrokParser {
             }
 
             cleanJSON(toReturn, "ciscoacs");
-            ArrayList<JSONObject> toReturnList = new ArrayList<JSONObject>();
+            ArrayList<JSONObject> toReturnList = new ArrayList<>();
             toReturnList.add(toReturn);
         }
     }
@@ -103,7 +102,7 @@ public class GrokCiscoACSParser  extends GrokParser {
             Matcher matcher = pattern.matcher(messageValue);
 
             // Check first occurrences
-            ArrayList<String> keys = new ArrayList<String>();
+            ArrayList<String> keys = new ArrayList<>();
             if (matcher.find()) {
                 keys.add(matcher.group().toString().substring(0, matcher.group().toString().length() - 1));
             }
@@ -231,7 +230,7 @@ public class GrokCiscoACSParser  extends GrokParser {
             Matcher matcher = pattern.matcher(messageValue);
 
             // Check first occurrences
-            ArrayList<String> keys = new ArrayList<String>();
+            ArrayList<String> keys = new ArrayList<>();
             if( matcher.find() ) {
                 keys.add(matcher.group().toString().substring(0,matcher.group().toString().length()-1));
             }
@@ -249,31 +248,115 @@ public class GrokCiscoACSParser  extends GrokParser {
                 }
             }
 
-            String firstHalf = messageValue.substring(0, messageValue.indexOf(",")+1);
+            List<String> logMessage = new ArrayList<>();
+            String firstHalf, messageClass, messageText, secondHalf, parameters, severity, messageCode, sequenceNum, timezoneOffset, eventTimestamp, eventDate;
 
-            String messageClass = firstHalf.substring(firstHalf.lastIndexOf(" ", firstHalf.lastIndexOf(":"))+1, firstHalf.lastIndexOf(":"));
-            String messageText = firstHalf.substring(firstHalf.lastIndexOf(":")+2, firstHalf.lastIndexOf(","));
+            try {
+                firstHalf = messageValue.substring(0, messageValue.indexOf(",")+1);
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("firstHalf");
+                firstHalf = "";
+            }
 
-            String secondHalf = messageValue.substring(messageValue.indexOf(",")+1);
+            try {
+                messageClass = firstHalf.substring(firstHalf.lastIndexOf(" ", firstHalf.lastIndexOf(":")) + 1, firstHalf.lastIndexOf(":"));
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("messageClass");
+                messageClass = "";
+            }
+            try {
+                messageText = firstHalf.substring(firstHalf.lastIndexOf(":") + 2, firstHalf.lastIndexOf(","));
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("messageText");
+                messageText = "";
+            }
+            try {
+                secondHalf = messageValue.substring(messageValue.indexOf(",")+1);
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("secondHalf");
+                secondHalf = "";
+            }
+            try {
+                parameters = firstHalf.substring(0,firstHalf.indexOf(messageClass)-1);
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("parameters");
+                parameters = "";
+            }
+            try {
+                severity = parameters.substring(parameters.lastIndexOf(" ") + 1);
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("severity");
+                severity = "";
+            }
+            try {
+                parameters = parameters.substring(0, parameters.lastIndexOf(" "));
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("parameters - part 2");
+                parameters = "";
+            }
+            try {
+                messageCode = parameters.substring(parameters.lastIndexOf(" ")+1);
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("messageCode");
+                messageCode = "";
+            }
+            try {
+                parameters = parameters.substring(0, parameters.lastIndexOf(" "));
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("parameters - part 3");
+                parameters = "";
+            }
+            try {
+                sequenceNum = parameters.substring(parameters.lastIndexOf(" ")+1);
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("sequenceNum");
+                sequenceNum = "";
+            }
+            try {
+                parameters = parameters.substring(0,parameters.lastIndexOf(" "));
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("parameters - part 4");
+                parameters = "";
+            }
+            try {
+                timezoneOffset = parameters.substring(parameters.lastIndexOf(" ")+1);
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("timezoneOffset");
+                timezoneOffset = "";
+            }
+            try {
+                parameters = parameters.substring(0,parameters.lastIndexOf(" "));
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("parameters - part 5");
+                parameters = "";
+            }
+            try {
+                eventTimestamp = parameters.substring(parameters.lastIndexOf(" ")+1);
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("eventTimestamp");
+                eventTimestamp = "";
+            }
+            try {
+                parameters = parameters.substring(0,parameters.lastIndexOf(" "));
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("parameters - part 6");
+                parameters = "";
+            }
+            try {
+                eventDate = parameters.substring(parameters.lastIndexOf(" ")+1);
+            } catch (StringIndexOutOfBoundsException e) {
+                logMessage.add("eventDate");
+                eventDate = "";
+            }
 
-            String parameters = firstHalf.substring(0,firstHalf.indexOf(messageClass)-1);
-
-            String severity = parameters.substring(parameters.lastIndexOf(" ")+1);
-            parameters = parameters.substring(0,parameters.lastIndexOf(" "));
-
-            String messageCode = parameters.substring(parameters.lastIndexOf(" ")+1);
-            parameters = parameters.substring(0,parameters.lastIndexOf(" "));
-
-            String sequenceNum = parameters.substring(parameters.lastIndexOf(" ")+1);
-            parameters = parameters.substring(0,parameters.lastIndexOf(" "));
-
-            String timezoneOffset = parameters.substring(parameters.lastIndexOf(" ")+1);
-            parameters = parameters.substring(0,parameters.lastIndexOf(" "));
-
-            String eventTimestamp = parameters.substring(parameters.lastIndexOf(" ")+1);
-            parameters = parameters.substring(0,parameters.lastIndexOf(" "));
-
-            String eventDate = parameters.substring(parameters.lastIndexOf(" ")+1);
+            if (logMessage.size() > 0) {
+                StringBuilder logMessageBuilder = new StringBuilder();
+                for (String str : logMessage) {
+                    logMessageBuilder.append(", " + str);
+                }
+                String logMessageString = logMessageBuilder.toString().replaceFirst(", ", "");
+                LOGGER.info("Unable to parse the following: " + logMessageString + ". This is likely because this information did not exist in the log file.");
+            }
 
             toReturn.put("messageClass",messageClass);
             toReturn.put("messageText",messageText);
@@ -286,8 +369,7 @@ public class GrokCiscoACSParser  extends GrokParser {
 
             String[] fields = secondHalf.split(",");
 
-            HashMap<String, String> pairs = new HashMap<String, String>();
-            HashMap<String, String> newPairs = new HashMap<String, String>();
+            HashMap<String, String> newPairs = new HashMap<>();
             JSONObject steps = new JSONObject();
             JSONObject cmdArgAV = new JSONObject();
             int stepCounter = 0;
@@ -372,11 +454,11 @@ public class GrokCiscoACSParser  extends GrokParser {
                 }
             }
 
-            toReturn.remove("messageGreedy"); // remove message. If something goes wrong, the message is preserved within the original_string
         } catch (Exception e) {
             LOGGER.error("Exception while adding: " + toReturn.get("original_string"), e);
         }
 
+        toReturn.remove("messageGreedy"); // remove message. If something goes wrong, the message is preserved within the original_string
         return toReturn;
     }
 
