@@ -17,8 +17,8 @@
  */
 package org.apache.metron.writer.hdfs;
 
+import backtype.storm.task.OutputCollector;
 import backtype.storm.tuple.Tuple;
-import org.apache.metron.common.configuration.EnrichmentConfigurations;
 import org.apache.metron.common.configuration.writer.WriterConfiguration;
 import org.apache.metron.common.interfaces.BulkMessageWriter;
 import org.apache.storm.hdfs.bolt.format.FileNameFormat;
@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
 
 public class HdfsWriter implements BulkMessageWriter<JSONObject>, Serializable {
   List<RotationAction> rotationActions = new ArrayList<>();
@@ -92,5 +93,10 @@ public class HdfsWriter implements BulkMessageWriter<JSONObject>, Serializable {
       sourceHandlerMap.put(sourceType, ret);
     }
     return ret;
+  }
+
+  @Override
+  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap, OutputCollector outputCollector) throws Exception {
+    throw new Exception("Method not implemented");
   }
 }

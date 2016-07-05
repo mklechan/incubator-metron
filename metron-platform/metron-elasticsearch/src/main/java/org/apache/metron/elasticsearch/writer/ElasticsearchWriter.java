@@ -17,16 +17,20 @@
  */
 package org.apache.metron.elasticsearch.writer;
 
+import backtype.storm.task.OutputCollector;
 import backtype.storm.tuple.Tuple;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.metron.common.Constants;
 import org.apache.metron.common.configuration.EnrichmentConfigurations;
 import org.apache.metron.common.configuration.enrichment.SensorEnrichmentConfig;
 import org.apache.metron.common.configuration.writer.WriterConfiguration;
 import org.apache.metron.common.interfaces.BulkMessageWriter;
 import org.apache.metron.common.interfaces.FieldNameConverter;
+import org.apache.metron.common.utils.ErrorUtils;
+import org.apache.metron.common.utils.MessageUtils;
 import org.apache.metron.common.writer.AbstractWriter;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -43,6 +47,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.Collection;
+import java.util.Map;
 
 public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWriter<JSONObject>, Serializable {
 
@@ -65,11 +72,9 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
     Settings.Builder settingsBuilder = Settings.settingsBuilder();
     settingsBuilder.put("cluster.name", globalConfiguration.get("es.clustername"));
     settingsBuilder.put("client.transport.ping_timeout","500s");
-
+    configurations.getGlobalConfig().put(Constants.GLOBAL_FLUSH_FLAG,"true");
     if (optionalSettings != null) {
-
       settingsBuilder.put(optionalSettings);
-
     }
 
     Settings settings = settingsBuilder.build();
@@ -84,7 +89,6 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
 
 
     } catch (UnknownHostException exception){
-
       throw new RuntimeException(exception);
     }
 
@@ -107,13 +111,13 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
       return Collections.emptyList();
     }
     if(ipObj instanceof String
-    && !ipObj.toString().contains(":")
-      ) {
+            && !ipObj.toString().contains(":")
+            ) {
       return ImmutableList.of(new HostnamePort(ipObj.toString(), Integer.parseInt(portObj + "")));
     }
     else if(ipObj instanceof String
-        && ipObj.toString().contains(":")
-           ) {
+            && ipObj.toString().contains(":")
+            ) {
       Iterable<String> tokens = Splitter.on(":").split(ipObj.toString());
       String host = Iterables.getFirst(tokens, null);
       String portStr = Iterables.getLast(tokens, null);
@@ -207,5 +211,70 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
   public void configure(String sensorName, WriterConfiguration configuration) {
 
   }
+
+  @Override
+  public void write(WriterConfiguration configurations, Map<String, Collection<Tuple>> sensorTupleMap, OutputCollector outputCollector) throws Exception{
+
+    String indexPostfix = dateFormat.format(new Date());
+    BulkRequestBuilder bulkRequest = client.prepareBulk();
+    Iterator<Entry<String, Collection<Tuple>>> iterator=sensorTupleMap.entrySet().iterator();
+
+    while(iterator.hasNext()){
+      Collection<Tuple> list=iterator.next().getValue();
+      if(list!=null&&list.size()>0){
+        for(Tuple tuple:list ) {
+          String sensorType="";
+          JSONObject message=null;
+          try {
+             message= (JSONObject) tuple.getValueByField("message");
+            sensorType= MessageUtils.getSensorType(message);
+
+            if (sensorType != null) {
+              String indexName = sensorType;
+
+              if (configurations != null) {
+                indexName = configurations.getIndex(sensorType);
+              }
+
+              indexName = indexName + "_index_" + indexPostfix;
+
+              JSONObject esDoc = new JSONObject();
+              for (Object k : message.keySet()) {
+                deDot(k.toString(), message, esDoc);
+              }
+
+              IndexRequestBuilder indexRequestBuilder = client.prepareIndex(indexName, sensorType + "_doc");
+
+              indexRequestBuilder = indexRequestBuilder.setSource(esDoc.toJSONString());
+              Object ts = esDoc.get("timestamp");
+              if (ts != null) {
+                indexRequestBuilder = indexRequestBuilder.setTimestamp(ts.toString());
+              }
+              if (configurations.getSensorConfig(sensorType).containsKey("elasticSearchID")) {
+                indexRequestBuilder.setId((String) message.get((String) configurations.getSensorConfig(sensorType).get("elasticSearchID")));
+              }
+              bulkRequest.add(indexRequestBuilder);
+            }
+          }catch(Exception e){
+            LOG.error("Error while adding index for sensor "+sensorType+" msg: "+message);
+           // ErrorUtils.handleError(outputCollector,e,Constants.ERROR_STREAM);
+          }
+        }
+      }
+      else{
+        LOG.debug("Got empty or null list");
+      }
+
+    }
+
+    BulkResponse resp = bulkRequest.execute().actionGet();
+
+    if (resp.hasFailures()) {
+
+      throw new Exception(resp.buildFailureMessage());
+
+    }
+  }
+
 }
 

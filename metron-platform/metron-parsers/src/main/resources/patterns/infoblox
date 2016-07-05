@@ -16,7 +16,7 @@ BEGINNING <%{PRIORITY:priority}>%{TIMESTAMP:timestamp}
 IPADDRESS \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}
 IPPORT \d+
 
-PROCESS \w+
+PROCESS [\w\\/]+
 PROCESSID \d+
 PROCESSIDFULL \[%{PROCESSID:process_id}\]
 PROCESSFULL %{PROCESS:process}%{PROCESSIDFULL:UNWANTED}?

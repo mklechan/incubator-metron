@@ -69,7 +69,7 @@ public class BasicBluecoatCIMParser extends BasicParser {
 			String[] substrings = message.split("\\|");
 
 			// the first substring contains timestamp and priority
-			String [] logstart = substrings[0].split("<|>|\\(|\\)| ");
+			String [] logstart = substrings[0].replace("  ", " ").split("<|>|\\(|\\)| ");
 			Date date = df.parse(logstart[2] + " " + logstart[3] + " " + Calendar.getInstance().get(Calendar.YEAR) + " " + logstart[4] + " UTC");
 			long epoch = date.getTime();
 			payload.put("timestamp", epoch);
