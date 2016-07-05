@@ -23,9 +23,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class BasicBluecoatCIMParserTest {
 
@@ -129,6 +127,21 @@ public class BasicBluecoatCIMParserTest {
 	}
 
 	@Test
+	public void testDoubleSpaceLine() {
+		BasicBluecoatCIMParser parser = new BasicBluecoatCIMParser();
+		String testString = "<13>Jul  5 09:14:41 kdcproxy05p.kdc.capitalone.com bcproxysg|date=2016-07-05|time=1 14:41|duration=85|src_i\n" +
+			"p=10.148.24.95|user=err144|cs_auth_group=COF\\GR%20GG%20COF%20USR%20Caponeweb|x_exception_id=-|filter_result=OBSERVED|category=\"Business/Economy\"|http_referrer=-|status=200|action=TCP_NC_MIS\n" +
+			"S|http_method=GET|http_content_type=text/xml;charset=utf-8|cs_uri_scheme=http|url=st.videojam.tv/VideoJamAdService/getCreative|dest=st.videojam.tv|uri_port=80|uri_path=/VideoJamAdService/getCreative|uri_query=?CreativeTagId=1430&w=320&h=250&ref=https%3A%2F%2Fwww.yahoo.com&cb=56815342605113980000|uri_extension=-|http_user_agent=Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36|dest_ip=45.55.120.153|bytes_in=1384|bytes_out=5508|x_virus_id=-|x_bluecoat_application_name=\"none\"|x_bluecoat_application_operation=\"none\"|target_ip=10.37.130.14|proxy_connect_type=Explicit|proxy_name=\"kdcproxy05p\"|proxy_ip=10.37.130.14|proxy_src_ip=199.244.214.104|dest_duration=30|x_rs_certificate_validate_status=-|x_rs_certificate_observed_errors=-|x_cs_ocsp_error=-|x_rs_ocsp_error=-|x_rs_connection_negotiated_ssl_version=-|x_rs_connection_negotiated_cipher=none|x_rs_connection_negotiated_cipher_size=-|x_rs_certificate_hostname=-|x_rs_certificate_hostname_category=-|x_cs_connection_negotiated_ssl_version=-|x_cs_connection_negotiated_cipher=none|x_cs_connection_negotiated_cipher_size=-|x_cs_certificate_subject=-|cs_realm=proxy_AD_realm|cs_auth_type=Certificate|x_auth_credential_type=Kerberos|%0D%0A";
+		List<JSONObject> result = null;
+		try {
+			result = parser.parse(testString.getBytes());
+			System.out.println(result.get(0));
+		} catch (Exception e) {
+		}
+		assertNotNull(result);
+	}
+
+	@Test
 	public void testEmptyLine() {
 		BasicBluecoatCIMParser parser = new BasicBluecoatCIMParser();
 		String testString = "";
@@ -140,4 +153,5 @@ public class BasicBluecoatCIMParserTest {
 		}
 		assertNull(result);
 	}
+
 }
