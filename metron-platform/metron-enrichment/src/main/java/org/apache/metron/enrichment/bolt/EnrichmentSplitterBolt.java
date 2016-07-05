@@ -32,6 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class EnrichmentSplitterBolt extends SplitBolt<JSONObject> {
@@ -78,17 +80,24 @@ public class EnrichmentSplitterBolt extends SplitBolt<JSONObject> {
     @Override
     public JSONObject generateMessage(Tuple tuple) {
         JSONObject message = null;
+
         if (messageFieldName == null) {
             byte[] data = tuple.getBinary(0);
             try {
+                //adding start enrichmentBoltTimetamp for debugging.
+                DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                Date date = new Date();
                 message = (JSONObject) parser.parse(new String(data, "UTF8"));
-                message.put(getClass().getSimpleName().toLowerCase() + ".splitter.begin.ts", "" + System.currentTimeMillis());
+                message.put(getClass().getSimpleName().toLowerCase() + ".splitter.begin.ts", "" + dateFormat.format(date).toString());
             } catch (ParseException | UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
         } else {
+            //adding ending enrichmentBoltTimetamp for debugging.
+            DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+            Date date = new Date();
             message = (JSONObject) tuple.getValueByField(messageFieldName);
-            message.put(getClass().getSimpleName().toLowerCase() + ".splitter.begin.ts", "" + System.currentTimeMillis());
+            message.put(getClass().getSimpleName().toLowerCase() + ".splitter.begin.ts", "" + dateFormat.format(date).toString());
         }
         return message;
     }
