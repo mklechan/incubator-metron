@@ -158,7 +158,8 @@ components:
             -   name: "withRotationPolicy"
                 args:
                     - ref: "hdfsRotationPolicy"
-
+    -   id: "errorWriter"
+        className: "org.apache.metron.common.writer.NoopWriter"
     -   id: "indexWriter"
         className: "${writer.class.name}"
 
@@ -291,15 +292,16 @@ bolts:
         configMethods:
             -   name: "withBulkMessageWriter"
                 args:
-            - ref: "indexWriter"
-        parallelism: 45
-# Indexing Bolts
+                    - ref: "indexWriter"
+        parallelism: 20
     -   id: "errorBolt"
-        className: "org.apache.metron.common.writer.NoopWriter"
-#        configMethods:
-#            -   name: "withBulkMessageWriter"
-#                args:
-#                   - ref: "indexWriter"
+        className: "org.apache.metron.enrichment.bolt.BulkMessageWriterBolt"
+        constructorArgs:
+            - "${kafka.zk}"
+        configMethods:
+            -   name: "withBulkMessageWriter"
+                args:
+                    - ref: "errorWriter"
         parallelism: 4
 #    -   id: "hdfsIndexingBolt"
 #        className: "org.apache.metron.enrichment.bolt.BulkMessageWriterBolt"
