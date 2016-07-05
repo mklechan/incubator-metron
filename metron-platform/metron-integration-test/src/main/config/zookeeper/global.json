@@ -7,8 +7,11 @@
   "solr.collection": "metron",
   "solr.numShards": 1,
   "solr.replicationFactor": 1,
-  "globalBatchSize": 5000,
-  "globalFlushFlag": true,
+  "globalBatchSize": 7000,
+  "globalFlushFlag": "true",
+  "errorIndexFlag": "false",
+  "flush": "true",
+  "flushIntervalInMs": 20000,
   "fieldValidations" : [
     {
        "input" : [ "src_ip_addr", "dst_ip_addr"]

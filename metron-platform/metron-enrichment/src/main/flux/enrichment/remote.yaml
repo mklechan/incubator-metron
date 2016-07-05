@@ -16,8 +16,9 @@
 
 name: "enrichment"
 config:
-    topology.workers: 26
-    topology.acker.executors: 26
+    topology.workers: 30
+    topology.acker.executors: 30
+
 
 components:
 # Enrichment
@@ -192,7 +193,7 @@ spouts:
         className: "storm.kafka.KafkaSpout"
         constructorArgs:
             - ref: "kafkaConfig"
-        parallelism: 26
+        parallelism: 10
 bolts:
 # Enrichment Bolts
     -   id: "enrichmentSplitBolt"
@@ -203,7 +204,7 @@ bolts:
             -   name: "withEnrichments"
                 args:
                     - ref: "enrichments"
-        parallelism: 6
+        parallelism: 45
 #    -   id: "geoEnrichmentBolt"
 #        className: "org.apache.metron.enrichment.bolt.GenericEnrichmentBolt"
 #        constructorArgs:
@@ -290,8 +291,16 @@ bolts:
         configMethods:
             -   name: "withBulkMessageWriter"
                 args:
-                    - ref: "indexWriter"
-        parallelism: 20
+            - ref: "indexWriter"
+        parallelism: 45
+# Indexing Bolts
+    -   id: "errorBolt"
+        className: "org.apache.metron.common.writer.NoopWriter"
+#        configMethods:
+#            -   name: "withBulkMessageWriter"
+#                args:
+#                   - ref: "indexWriter"
+        parallelism: 4
 #    -   id: "hdfsIndexingBolt"
 #        className: "org.apache.metron.enrichment.bolt.BulkMessageWriterBolt"
 #        constructorArgs:
@@ -419,9 +428,9 @@ streams:
             streamId: "message"
             type: SHUFFLE
 
-    -   name: "indexingBolt -> errorIndexingBolt"
+    -   name: "indexingBolt -> errorBolt"
         from: "indexingBolt"
-        to: "indexingBolt"
+        to: "errorBolt"
         grouping:
             streamId: "error"
             type: SHUFFLE

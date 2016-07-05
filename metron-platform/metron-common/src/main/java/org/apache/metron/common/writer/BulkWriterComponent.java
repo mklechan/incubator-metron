@@ -45,6 +45,7 @@ public class BulkWriterComponent<MESSAGE_T> {
   private long totalESWaitTime=0;
   private long lastESRun=0;
   private int currentBatchSize=0;
+  private boolean indexError=false;
 
   public BulkWriterComponent(OutputCollector collector) {
     this.collector = collector;
@@ -61,12 +62,10 @@ public class BulkWriterComponent<MESSAGE_T> {
   }
 
   public void setFlush(boolean flush) {
-    LOG.trace("Setting flush to " + flush);
     this.flush = flush;
   }
 
   public void setFlushIntervalInMs(Long flushIntervalInMs) {
-    LOG.info("Setting flushIntervalInMs to " + flushIntervalInMs);
     this.flushIntervalInMs = flushIntervalInMs;
   }
 
@@ -81,7 +80,12 @@ public class BulkWriterComponent<MESSAGE_T> {
     tuples.forEach(t -> collector.ack(t));
     if(!Iterables.isEmpty(tuples)) {
       LOG.error("Failing " + Iterables.size(tuples) + " tuples", e);
-      ErrorUtils.handleError(collector, e, Constants.ERROR_STREAM);
+
+
+      if(indexError){
+        ErrorUtils.handleError(collector, e, Constants.ERROR_STREAM);
+      }
+
     }
   }
 
@@ -142,6 +146,14 @@ public class BulkWriterComponent<MESSAGE_T> {
         }
       }
     }catch (Throwable e) {
+      LOG.debug("Ex:ES flush time:"+(System.currentTimeMillis()-lastESRun));
+      LOG.debug("Ex:ES total flush time:"+totalESWaitTime );
+      LOG.trace("Ex:Flushed "+currentBatchSize+" tuples for all sensors:");
+
+      if(configurations.getGlobalConfig()!=null&&configurations.getGlobalConfig().get(Constants.ERROR_INDEX_FLAG)!=null){
+        indexError=Boolean.parseBoolean(configurations.getGlobalConfig().get(Constants.ERROR_INDEX_FLAG).toString());
+        LOG.trace("ERROR_INDEX_FLAG: "+indexError);
+      }
 
       if(handleError) {
         Iterator<Entry<String, Collection<Tuple>>> iterator=sensorTupleMap.entrySet().iterator();
@@ -182,6 +194,10 @@ public class BulkWriterComponent<MESSAGE_T> {
     } catch (Throwable e) {
 
       if(handleError) {
+        if(configurations.getGlobalConfig()!=null&&configurations.getGlobalConfig().get(Constants.ERROR_INDEX_FLAG)!=null){
+          indexError=Boolean.parseBoolean(configurations.getGlobalConfig().get(Constants.ERROR_INDEX_FLAG).toString());
+          LOG.trace("ERROR_INDEX_FLAG: "+indexError);
+        }
         error(e, tupleList);
       }
       else {

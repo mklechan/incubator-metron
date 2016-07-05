@@ -256,8 +256,13 @@ public class ElasticsearchWriter extends AbstractWriter implements BulkMessageWr
               bulkRequest.add(indexRequestBuilder);
             }
           }catch(Exception e){
-            LOG.error("Error while adding index for sensor "+sensorType+" msg: "+message);
-           // ErrorUtils.handleError(outputCollector,e,Constants.ERROR_STREAM);
+            LOG.error("Error:"+e.getMessage()+" while adding index for sensor "+sensorType);
+            LOG.trace(" msg: "+message);
+            if(configurations.getGlobalConfig()!=null&&configurations.getGlobalConfig().get(Constants.ERROR_INDEX_FLAG)!=null){
+              if(Boolean.parseBoolean(configurations.getGlobalConfig().get(Constants.ERROR_INDEX_FLAG).toString())){
+                ErrorUtils.handleError(outputCollector,e,Constants.ERROR_STREAM);
+              }
+            }
           }
         }
       }

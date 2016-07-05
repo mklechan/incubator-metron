@@ -154,6 +154,8 @@ public class BulkMessageWriterBoltTest extends BaseEnrichmentBoltTest {
     reset(outputCollector);
     doThrow(new Exception()).when(bulkMessageWriter).write(eq(sensorType), any(WriterConfiguration.class), Matchers.anyListOf(Tuple.class), Matchers.anyListOf(JSONObject.class));
     when(tuple.getValueByField("message")).thenReturn(messageList.get(0));
+    bulkMessageWriterBolt.getConfigurations().updateGlobalConfig(new FileInputStream(sampleSensorEnrichmentConfigPath));
+    bulkMessageWriterBolt.getConfigurations().getGlobalConfig().put(Constants.ERROR_INDEX_FLAG,"true");
     for(int i = 0; i < 5; i++) {
       bulkMessageWriterBolt.execute(tuple);
     }
@@ -219,6 +221,7 @@ public class BulkMessageWriterBoltTest extends BaseEnrichmentBoltTest {
     reset(outputCollector);
     doThrow(new Exception()).when(bulkMessageWriter).write(any(WriterConfiguration.class),Matchers.anyMap(),any(OutputCollector.class) );
     when(tuple.getValueByField("message")).thenReturn(messageList.get(0));
+    bulkMessageWriterBolt.getConfigurations().getGlobalConfig().put(Constants.ERROR_INDEX_FLAG,"true");
     for(int i = 0; i < 9; i++) {
       bulkMessageWriterBolt.execute(tuple);
     }
