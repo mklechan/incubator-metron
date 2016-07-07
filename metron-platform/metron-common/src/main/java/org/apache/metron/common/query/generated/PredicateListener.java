@@ -225,18 +225,6 @@ public interface PredicateListener extends ParseTreeListener {
 	 */
 	void exitOp_list(PredicateParser.Op_listContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code TransformationFunc}
-	 * labeled alternative in {@link PredicateParser#t_func}.
-	 * @param ctx the parse tree
-	 */
-	void enterTransformationFunc(PredicateParser.TransformationFuncContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code TransformationFunc}
-	 * labeled alternative in {@link PredicateParser#t_func}.
-	 * @param ctx the parse tree
-	 */
-	void exitTransformationFunc(PredicateParser.TransformationFuncContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code StringLiteral}
 	 * labeled alternative in {@link PredicateParser#identifier_operand}.
 	 * @param ctx the parse tree
@@ -261,53 +249,17 @@ public interface PredicateListener extends ParseTreeListener {
 	 */
 	void exitLogicalVariable(PredicateParser.LogicalVariableContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code id_tfunc}
+	 * Enter a parse tree produced by the {@code StringFunc}
 	 * labeled alternative in {@link PredicateParser#identifier_operand}.
 	 * @param ctx the parse tree
 	 */
-	void enterId_tfunc(PredicateParser.Id_tfuncContext ctx);
+	void enterStringFunc(PredicateParser.StringFuncContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code id_tfunc}
+	 * Exit a parse tree produced by the {@code StringFunc}
 	 * labeled alternative in {@link PredicateParser#identifier_operand}.
 	 * @param ctx the parse tree
 	 */
-	void exitId_tfunc(PredicateParser.Id_tfuncContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code IntegerLiteral}
-	 * labeled alternative in {@link PredicateParser#identifier_operand}.
-	 * @param ctx the parse tree
-	 */
-	void enterIntegerLiteral(PredicateParser.IntegerLiteralContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code IntegerLiteral}
-	 * labeled alternative in {@link PredicateParser#identifier_operand}.
-	 * @param ctx the parse tree
-	 */
-	void exitIntegerLiteral(PredicateParser.IntegerLiteralContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code DoubleLiteral}
-	 * labeled alternative in {@link PredicateParser#identifier_operand}.
-	 * @param ctx the parse tree
-	 */
-	void enterDoubleLiteral(PredicateParser.DoubleLiteralContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code DoubleLiteral}
-	 * labeled alternative in {@link PredicateParser#identifier_operand}.
-	 * @param ctx the parse tree
-	 */
-	void exitDoubleLiteral(PredicateParser.DoubleLiteralContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code List}
-	 * labeled alternative in {@link PredicateParser#identifier_operand}.
-	 * @param ctx the parse tree
-	 */
-	void enterList(PredicateParser.ListContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code List}
-	 * labeled alternative in {@link PredicateParser#identifier_operand}.
-	 * @param ctx the parse tree
-	 */
-	void exitList(PredicateParser.ListContext ctx);
+	void exitStringFunc(PredicateParser.StringFuncContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code IdentifierOperand}
 	 * labeled alternative in {@link PredicateParser#comparison_operand}.

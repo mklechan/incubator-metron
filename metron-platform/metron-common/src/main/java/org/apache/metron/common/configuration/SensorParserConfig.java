@@ -22,36 +22,17 @@ import com.google.common.collect.ImmutableList;
 import org.apache.metron.common.utils.JSONUtils;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SensorParserConfig implements Serializable {
+public class SensorParserConfig {
 
   private String parserClassName;
   private String filterClassName;
   private String sensorTopic;
   private String writerClassName;
-  private String errorWriterClassName;
-  private String invalidWriterClassName;
-
-  public String getErrorWriterClassName() {
-    return errorWriterClassName;
-  }
-
-  public void setErrorWriterClassName(String errorWriterClassName) {
-    this.errorWriterClassName = errorWriterClassName;
-  }
-
-  public String getInvalidWriterClassName() {
-    return invalidWriterClassName;
-  }
-
-  public void setInvalidWriterClassName(String invalidWriterClassName) {
-    this.invalidWriterClassName = invalidWriterClassName;
-  }
 
   public String getWriterClassName() {
     return writerClassName;
@@ -126,8 +107,7 @@ public class SensorParserConfig implements Serializable {
             ", filterClassName='" + filterClassName + '\'' +
             ", sensorTopic='" + sensorTopic + '\'' +
             ", writerClassName='" + writerClassName + '\'' +
-            ", errorWriterClassName='" + errorWriterClassName + '\'' +
-            ", invalidWriterClassName='" + invalidWriterClassName + '\'' +
+            ", parserConfig=" + parserConfig +
             ", parserConfig=" + parserConfig +
             ", fieldTransformations=" + fieldTransformations +
             '}';
@@ -148,9 +128,7 @@ public class SensorParserConfig implements Serializable {
       return false;
     if (getWriterClassName() != null ? !getWriterClassName().equals(that.getWriterClassName()) : that.getWriterClassName() != null)
       return false;
-    if (getErrorWriterClassName() != null ? !getErrorWriterClassName().equals(that.getErrorWriterClassName()) : that.getErrorWriterClassName() != null)
-      return false;
-    if (getInvalidWriterClassName() != null ? !getInvalidWriterClassName().equals(that.getInvalidWriterClassName()) : that.getInvalidWriterClassName() != null)
+    if (getParserConfig() != null ? !getParserConfig().equals(that.getParserConfig()) : that.getParserConfig() != null)
       return false;
     if (getParserConfig() != null ? !getParserConfig().equals(that.getParserConfig()) : that.getParserConfig() != null)
       return false;
@@ -164,8 +142,7 @@ public class SensorParserConfig implements Serializable {
     result = 31 * result + (getFilterClassName() != null ? getFilterClassName().hashCode() : 0);
     result = 31 * result + (getSensorTopic() != null ? getSensorTopic().hashCode() : 0);
     result = 31 * result + (getWriterClassName() != null ? getWriterClassName().hashCode() : 0);
-    result = 31 * result + (getErrorWriterClassName() != null ? getErrorWriterClassName().hashCode() : 0);
-    result = 31 * result + (getInvalidWriterClassName() != null ? getInvalidWriterClassName().hashCode() : 0);
+    result = 31 * result + (getParserConfig() != null ? getParserConfig().hashCode() : 0);
     result = 31 * result + (getParserConfig() != null ? getParserConfig().hashCode() : 0);
     result = 31 * result + (getFieldTransformations() != null ? getFieldTransformations().hashCode() : 0);
     return result;

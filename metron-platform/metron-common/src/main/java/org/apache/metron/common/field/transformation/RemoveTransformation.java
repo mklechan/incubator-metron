@@ -18,10 +18,11 @@
 
 package org.apache.metron.common.field.transformation;
 
-import org.apache.metron.common.dsl.MapVariableResolver;
-import org.apache.metron.common.dsl.ParseException;
+import com.google.common.collect.ImmutableMap;
+import org.apache.metron.common.query.MapVariableResolver;
+import org.apache.metron.common.query.ParseException;
 import org.apache.metron.common.query.PredicateProcessor;
-import org.apache.metron.common.dsl.VariableResolver;
+import org.apache.metron.common.query.VariableResolver;
 
 import java.util.HashMap;
 import java.util.List;

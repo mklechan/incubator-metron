@@ -26,7 +26,7 @@ import java.util.function.Predicate;
 
 public class IntegerValidation extends SimpleValidation{
   @Override
-  public Predicate<Object> getPredicate() {
-    return x -> LongValidator.getInstance().isValid(x == null?null:x.toString());
+  public Predicate<String> getPredicate() {
+    return x -> LongValidator.getInstance().isValid(x);
   }
 }

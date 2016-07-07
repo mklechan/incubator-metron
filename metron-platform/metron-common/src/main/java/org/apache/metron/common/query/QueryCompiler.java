@@ -18,19 +18,17 @@
 
 package org.apache.metron.common.query;
 
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableSet;
-import org.apache.metron.common.dsl.*;
 import org.apache.metron.common.query.generated.PredicateBaseListener;
 import org.apache.metron.common.query.generated.PredicateParser;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 class QueryCompiler extends PredicateBaseListener {
   private VariableResolver resolver = null;
-  private Stack<Token> tokenStack = new Stack<>();
+  private Stack<PredicateToken> tokenStack = new Stack<>();
 
   public QueryCompiler(VariableResolver resolver) {
     this.resolver = resolver;
@@ -47,20 +45,20 @@ class QueryCompiler extends PredicateBaseListener {
 
   @Override
   public void exitLogicalExpressionAnd(PredicateParser.LogicalExpressionAndContext ctx) {
-    Token<?> left = popStack();
-    Token<?> right = popStack();
-    tokenStack.push(new Token<>(booleanOp(left, right, (l, r) -> l && r, "&&"), Boolean.class));
+    PredicateToken<?> left = popStack();
+    PredicateToken<?> right = popStack();
+    tokenStack.push(new PredicateToken<>(booleanOp(left, right, (l, r) -> l && r, "&&"), Boolean.class));
   }
 
   @Override
   public void exitLogicalExpressionOr(PredicateParser.LogicalExpressionOrContext ctx) {
-    Token<?> left = popStack();
-    Token<?> right = popStack();
+    PredicateToken<?> left = popStack();
+    PredicateToken<?> right = popStack();
 
-    tokenStack.push(new Token<>(booleanOp(left, right, (l, r) -> l || r, "||"), Boolean.class));
+    tokenStack.push(new PredicateToken<>(booleanOp(left, right, (l, r) -> l || r, "||"), Boolean.class));
   }
 
-  private boolean booleanOp(Token<?> left, Token<?> right, BooleanOp op, String opName)
+  private boolean booleanOp(PredicateToken<?> left, PredicateToken<?> right, BooleanOp op, String opName)
   {
     if(left.getUnderlyingType().equals(right.getUnderlyingType()) && left.getUnderlyingType().equals(Boolean.class)) {
       Boolean l = (Boolean) left.getValue();
@@ -89,63 +87,24 @@ class QueryCompiler extends PredicateBaseListener {
       default:
         throw new ParseException("Unable to process " + ctx.getText() + " as a boolean constant");
     }
-    tokenStack.push(new Token<>(b, Boolean.class));
-  }
-
-
-  @Override
-  public void exitDoubleLiteral(PredicateParser.DoubleLiteralContext ctx) {
-    tokenStack.push(new Token<>(Double.parseDouble(ctx.getText()), Double.class));
-  }
-
-
-  @Override
-  public void exitIntegerLiteral(PredicateParser.IntegerLiteralContext ctx) {
-    tokenStack.push(new Token<>(Integer.parseInt(ctx.getText()), Integer.class));
-  }
-
-  private <T extends Comparable<T>> boolean compare(T l, T r, String op) {
-    if(op.equals("==")) {
-        return l.compareTo(r) == 0;
-      }
-      else if(op.equals("!=")) {
-        return l.compareTo(r) != 0;
-      }
-      else if(op.equals("<")) {
-        return l.compareTo(r) < 0;
-      }
-      else if(op.equals(">")) {
-        return l.compareTo(r) > 0;
-      }
-      else if(op.equals(">=")) {
-        return l.compareTo(r) >= 0;
-      }
-      else {
-        return l.compareTo(r) <= 0;
-      }
+    tokenStack.push(new PredicateToken<>(b, Boolean.class));
   }
 
   @Override
   public void exitComparisonExpressionWithOperator(PredicateParser.ComparisonExpressionWithOperatorContext ctx) {
-    String op = ctx.getChild(1).getText();
-    Token<?> right = popStack();
-    Token<?> left = popStack();
-    if(left.getValue() instanceof Number
-    && right.getValue() instanceof Number
-      ) {
-      Double l = ((Number)left.getValue()).doubleValue();
-      Double r = ((Number)right.getValue()).doubleValue();
-      tokenStack.push(new Token<>(compare(l, r, op), Boolean.class));
-
+    boolean isEqualsOp = ctx.getChild(1).getText().equals("==");
+    PredicateToken<?> left = popStack();
+    PredicateToken<?> right = popStack();
+    if(left.getUnderlyingType().equals(right.getUnderlyingType())) {
+      boolean isEquals = left.equals(right);
+      tokenStack.push(new PredicateToken<>(isEqualsOp?isEquals:!isEquals, Boolean.class));
     }
     else {
-      String l = left.getValue() == null?"":left.getValue().toString();
-      String r = right.getValue() == null?"":right.getValue().toString();
-      tokenStack.push(new Token<>(compare(l, r, op), Boolean.class));
+      throw new ParseException("Unable to compare " + left.getValue() + " " + ctx.getText() + " " + right.getValue());
     }
   }
 
-  public Token<?> popStack() {
+  public PredicateToken<?> popStack() {
     if(tokenStack.empty()) {
       throw new ParseException("Unable to pop an empty stack");
     }
@@ -154,29 +113,50 @@ class QueryCompiler extends PredicateBaseListener {
 
   @Override
   public void exitLogicalVariable(PredicateParser.LogicalVariableContext ctx) {
-    tokenStack.push(new Token<>(resolver.resolve(ctx.getText()), Object.class));
+    tokenStack.push(new PredicateToken<>(resolver.resolve(ctx.getText()), String.class));
   }
 
 
   @Override
   public void exitStringLiteral(PredicateParser.StringLiteralContext ctx) {
     String val = ctx.getText();
-    tokenStack.push(new Token<>(val.substring(1, val.length() - 1), String.class));
+    tokenStack.push(new PredicateToken<>(val.substring(1, val.length() - 1), String.class));
   }
-
 
 
   @Override
   public void enterList_entity(PredicateParser.List_entityContext ctx) {
-    tokenStack.push(new Token<>(new FunctionMarker(), FunctionMarker.class));
+    tokenStack.push(new PredicateToken<>(new FunctionMarker(), FunctionMarker.class));
   }
 
 
   @Override
   public void exitList_entity(PredicateParser.List_entityContext ctx) {
+    Set<String> inSet = new HashSet<>();
+    while(true) {
+      PredicateToken<?> token = popStack();
+      if(token.getUnderlyingType().equals(FunctionMarker.class)) {
+        break;
+      }
+      else {
+        inSet.add((String)token.getValue());
+      }
+    }
+    tokenStack.push(new PredicateToken<>(inSet, Set.class));
+  }
+
+
+  @Override
+  public void enterFunc_args(PredicateParser.Func_argsContext ctx) {
+    tokenStack.push(new PredicateToken<>(new FunctionMarker(), FunctionMarker.class));
+  }
+
+
+  @Override
+  public void exitFunc_args(PredicateParser.Func_argsContext ctx) {
     LinkedList<String> args = new LinkedList<>();
     while(true) {
-      Token<?> token = popStack();
+      PredicateToken<?> token = popStack();
       if(token.getUnderlyingType().equals(FunctionMarker.class)) {
         break;
       }
@@ -184,71 +164,56 @@ class QueryCompiler extends PredicateBaseListener {
         args.addFirst((String)token.getValue());
       }
     }
-    tokenStack.push(new Token<>(args, List.class));
-  }
-
-
-  @Override
-  public void enterFunc_args(PredicateParser.Func_argsContext ctx) {
-    tokenStack.push(new Token<>(new FunctionMarker(), FunctionMarker.class));
-  }
-
-
-  @Override
-  public void exitFunc_args(PredicateParser.Func_argsContext ctx) {
-    LinkedList<Object> args = new LinkedList<>();
-    while(true) {
-      Token<?> token = popStack();
-      if(token.getUnderlyingType().equals(FunctionMarker.class)) {
-        break;
-      }
-      else {
-        args.addFirst(token.getValue());
-      }
-    }
-    tokenStack.push(new Token<>(args, List.class));
-  }
-
-  private boolean handleIn(Token<?> left, Token<?> right) {
-    Object key = null;
-    Set<Object> set = null;
-    if(left.getValue() instanceof Collection) {
-      set = new HashSet<>((List<Object>) left.getValue());
-    }
-    else if(left.getValue() != null) {
-      set = ImmutableSet.of(left.getValue());
-    }
-    else {
-      set = new HashSet<>();
-    }
-
-
-    key = right.getValue();
-    if(key == null || set.isEmpty()) {
-      return false;
-    }
-    return set.contains(key);
+    tokenStack.push(new PredicateToken<>(args, List.class));
   }
 
   @Override
   public void exitInExpression(PredicateParser.InExpressionContext ctx) {
-    Token<?> left = popStack();
-    Token<?> right = popStack();
-    tokenStack.push(new Token<>(handleIn(left, right), Boolean.class));
+    PredicateToken<?> left = popStack();
+    PredicateToken<?> right = popStack();
+    String key = null;
+    Set<String> set = null;
+    if(left.getUnderlyingType().equals(Set.class)) {
+      set = (Set<String>) left.getValue();
+    }
+    else {
+      throw new ParseException("Unable to process in clause because " + left.getValue() + " is not a set");
+    }
+    if(right.getUnderlyingType().equals(String.class)) {
+      key = (String) right.getValue();
+    }
+    else {
+      throw new ParseException("Unable to process in clause because " + right.getValue() + " is not a string");
+    }
+    tokenStack.push(new PredicateToken<>(set.contains(key), Boolean.class));
   }
-
 
   @Override
   public void exitNInExpression(PredicateParser.NInExpressionContext ctx) {
-    Token<?> left = popStack();
-    Token<?> right = popStack();
-    tokenStack.push(new Token<>(!handleIn(left, right), Boolean.class));
+    PredicateToken<?> left = popStack();
+    PredicateToken<?> right = popStack();
+    String key = null;
+    Set<String> set = null;
+    if(left.getUnderlyingType().equals(Set.class)) {
+      set = (Set<String>) left.getValue();
+    }
+    else {
+      throw new ParseException("Unable to process in clause because " + left.getValue() + " is not a set");
+    }
+    if(right.getUnderlyingType().equals(String.class)) {
+      key = (String) right.getValue();
+    }
+    else {
+      throw new ParseException("Unable to process in clause because " + right.getValue() + " is not a string");
+    }
+    tokenStack.push(new PredicateToken<>(!set.contains(key), Boolean.class));
   }
+
 
   @Override
   public void exitLogicalFunc(PredicateParser.LogicalFuncContext ctx) {
     String funcName = ctx.getChild(0).getText();
-    Predicate<List<Object>> func;
+    Predicate<List<String>> func;
     try {
       func = LogicalFunctions.valueOf(funcName);
     }
@@ -257,69 +222,60 @@ class QueryCompiler extends PredicateBaseListener {
               + Joiner.on(',').join(LogicalFunctions.values())
       );
     }
-    Token<?> left = popStack();
-    List<Object> argList = null;
-    if(left.getValue() instanceof List) {
-      argList = (List<Object>) left.getValue();
+    PredicateToken<?> left = popStack();
+    List<String> argList = null;
+    if(left.getUnderlyingType().equals(List.class)) {
+      argList = (List<String>) left.getValue();
     }
     else {
       throw new ParseException("Unable to process in clause because " + left.getValue() + " is not a set");
     }
     Boolean result = func.test(argList);
-    tokenStack.push(new Token<>(result, Boolean.class));
+    tokenStack.push(new PredicateToken<>(result, Boolean.class));
   }
 
-  /**
-   * {@inheritDoc}
-   * <p/>
-   * <p>The default implementation does nothing.</p>
-   *
-   * @param ctx
-   */
   @Override
-  public void exitTransformationFunc(PredicateParser.TransformationFuncContext ctx) {
+  public void exitStringFunc(PredicateParser.StringFuncContext ctx) {
     String funcName = ctx.getChild(0).getText();
-    Function<List<Object>, Object> func;
+    Function<List<String>, String> func;
     try {
-      func = TransformationFunctions.valueOf(funcName);
+      func = StringFunctions.valueOf(funcName);
     }
     catch(IllegalArgumentException iae) {
       throw new ParseException("Unable to find string function " + funcName + ".  Valid functions are "
-              + Joiner.on(',').join(TransformationFunctions.values())
+              + Joiner.on(',').join(StringFunctions.values())
       );
     }
-    Token<?> left = popStack();
-    List<Object> argList = null;
+    PredicateToken<?> left = popStack();
+    List<String> argList = null;
     if(left.getUnderlyingType().equals(List.class)) {
-      argList = (List<Object>) left.getValue();
+      argList = (List<String>) left.getValue();
     }
     else {
       throw new ParseException("Unable to process in clause because " + left.getValue() + " is not a set");
     }
-    Object result = func.apply(argList);
-    tokenStack.push(new Token<>(result, Object.class));
+    String result = func.apply(argList);
+    tokenStack.push(new PredicateToken<>(result, String.class));
   }
-
-
 
   @Override
   public void exitExistsFunc(PredicateParser.ExistsFuncContext ctx) {
     String variable = ctx.getChild(2).getText();
     boolean exists = resolver.resolve(variable) != null;
-    tokenStack.push(new Token<>(exists, Boolean.class));
+    tokenStack.push(new PredicateToken<>(exists, Boolean.class));
   }
 
   @Override
   public void exitNotFunc(PredicateParser.NotFuncContext ctx) {
-    Token<Boolean> arg = (Token<Boolean>) popStack();
-    tokenStack.push(new Token<>(!arg.getValue(), Boolean.class));
+    PredicateToken<Boolean> arg = (PredicateToken<Boolean>) popStack();
+    tokenStack.push(new PredicateToken<>(!arg.getValue(), Boolean.class));
   }
 
   public boolean getResult() throws ParseException {
     if(tokenStack.empty()) {
       throw new ParseException("Invalid predicate: Empty stack.");
     }
-    Token<?> token = popStack();
+    PredicateToken<?> token = popStack();
     if(token.getUnderlyingType().equals(Boolean.class) && tokenStack.empty()) {
       return (Boolean)token.getValue();
     }

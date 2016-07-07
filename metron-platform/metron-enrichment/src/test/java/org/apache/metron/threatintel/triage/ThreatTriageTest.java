@@ -19,7 +19,6 @@
 package org.apache.metron.threatintel.triage;
 
 import org.adrianwalker.multilinestring.Multiline;
-import org.apache.metron.common.configuration.enrichment.SensorEnrichmentConfig;
 import org.apache.metron.common.configuration.enrichment.threatintel.ThreatTriageConfig;
 import org.apache.metron.common.utils.JSONUtils;
 import org.junit.Assert;
@@ -31,28 +30,19 @@ import java.util.HashMap;
 public class ThreatTriageTest {
   /**
    {
-    "threatIntel" : {
-      "triageConfig" :
-      {
-        "riskLevelRules" : {
-            "user.type in [ 'admin', 'power' ] and asset.type == 'web'" : 10
-           ,"asset.type == 'web'" : 5
-          ,"user.type == 'normal'  and asset.type == 'web'" : 0
-          ,"user.type in whitelist" : -1
+    "riskLevelRules" : {
+        "user.type in [ 'admin', 'power' ] and asset.type == 'web'" : 10
+       ,"asset.type == 'web'" : 5
+       ,"user.type == 'normal'  and asset.type == 'web'" : 0
                           }
-        ,"aggregator" : "MAX"
-      },
-      "config" : {
-        "whitelist" : [ "abnormal" ]
-                 }
-    }
+   ,"aggregator" : "MAX"
    }
    */
   @Multiline
   public static String smokeTestProcessorConfig;
 
   private static ThreatTriageProcessor getProcessor(String config) throws IOException {
-    SensorEnrichmentConfig c = JSONUtils.INSTANCE.load(config, SensorEnrichmentConfig.class);
+    ThreatTriageConfig c = JSONUtils.INSTANCE.load(config, ThreatTriageConfig.class);
     return new ThreatTriageProcessor(c);
   }
 
@@ -61,7 +51,7 @@ public class ThreatTriageTest {
     ThreatTriageProcessor threatTriageProcessor = getProcessor(smokeTestProcessorConfig);
     Assert.assertEquals("Expected a score of 0"
                        , 0d
-                       ,new ThreatTriageProcessor(new SensorEnrichmentConfig()).apply(new HashMap<Object, Object>() {{
+                       ,new ThreatTriageProcessor(new ThreatTriageConfig()).apply(new HashMap<Object, Object>() {{
                           put("user.type", "admin");
                           put("asset.type", "web");
                                         }}
@@ -95,30 +85,16 @@ public class ThreatTriageTest {
                                         )
                        , 1e-10
                        );
-    Assert.assertEquals("Expected a score of -Inf"
-                       , Double.NEGATIVE_INFINITY
-                       , threatTriageProcessor.apply(new HashMap<Object, Object>() {{
-                          put("user.type", "abnormal");
-                          put("asset.type", "bar");
-                                        }}
-                                        )
-                       , 1e-10
-                       );
   }
 
   /**
    {
-    "threatIntel" : {
-      "triageConfig" :
-      {
-        "riskLevelRules" : {
-            "user.type in [ 'admin', 'power' ] and asset.type == 'web'" : 10
-           ,"asset.type == 'web'" : 5
-           ,"user.type == 'normal'  and asset.type == 'web'" : 0
+    "riskLevelRules" : {
+        "user.type in [ 'admin', 'power' ] and asset.type == 'web'" : 10
+       ,"asset.type == 'web'" : 5
+       ,"user.type == 'normal'  and asset.type == 'web'" : 0
                           }
-        ,"aggregator" : "POSITIVE_MEAN"
-      }
-                   }
+   ,"aggregator" : "POSITIVE_MEAN"
    }
    */
   @Multiline

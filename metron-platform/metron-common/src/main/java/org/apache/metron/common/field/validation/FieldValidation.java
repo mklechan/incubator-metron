@@ -18,10 +18,9 @@
 
 package org.apache.metron.common.field.validation;
 
-import java.io.Serializable;
 import java.util.Map;
 
-public interface FieldValidation extends Serializable {
+public interface FieldValidation {
   boolean isValid( Map<String, Object> input
                  , Map<String, Object> validationConfig
                  , Map<String, Object> globalConfig

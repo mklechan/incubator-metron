@@ -22,7 +22,6 @@ import com.google.common.base.Function;
 import kafka.admin.AdminUtils;
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
-import kafka.common.TopicExistsException;
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
@@ -216,14 +215,9 @@ public class KafkaWithZKComponent implements InMemoryComponent {
   }
 
   public void createTopic(String name, int numPartitions, boolean waitUntilMetadataIsPropagated) throws InterruptedException {
-    try {
-      AdminUtils.createTopic(zkClient, name, numPartitions, 1, new Properties());
-      if (waitUntilMetadataIsPropagated) {
-        waitUntilMetadataIsPropagated(name, numPartitions);
-      }
-    }
-    catch(TopicExistsException tee) {
-
+    AdminUtils.createTopic(zkClient, name, numPartitions, 1, new Properties());
+    if(waitUntilMetadataIsPropagated) {
+      waitUntilMetadataIsPropagated(name, numPartitions);
     }
   }
 

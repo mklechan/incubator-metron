@@ -25,14 +25,14 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public abstract class SimpleValidation implements FieldValidation, Predicate<List<Object>> {
+public abstract class SimpleValidation implements FieldValidation, Predicate<List<String>> {
   @Override
   public boolean isValid( Map<String, Object> input
                         , Map<String, Object> validationConfig
                         , Map<String, Object> globalConfig
                         )
   {
-    Predicate<Object> predicate = getPredicate();
+    Predicate<String> predicate = getPredicate();
     if(isNonExistentOk()) {
       for (Object o : input.values()) {
         if (o != null && !predicate.test(o.toString())) {
@@ -51,9 +51,9 @@ public abstract class SimpleValidation implements FieldValidation, Predicate<Lis
   }
 
   @Override
-  public boolean test(List<Object> input) {
-    Predicate<Object> predicate = getPredicate();
-    for(Object o : input) {
+  public boolean test(List<String> input) {
+    Predicate<String> predicate = getPredicate();
+    for(String o : input) {
       if(o == null || !predicate.test(o)){
         return false;
       }
@@ -66,7 +66,7 @@ public abstract class SimpleValidation implements FieldValidation, Predicate<Lis
 
   }
 
-  public abstract Predicate<Object> getPredicate();
+  public abstract Predicate<String> getPredicate();
   protected boolean isNonExistentOk() {
     return true;
   }
