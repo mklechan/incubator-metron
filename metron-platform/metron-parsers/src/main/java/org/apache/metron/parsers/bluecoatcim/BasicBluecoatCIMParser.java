@@ -58,6 +58,12 @@ public class BasicBluecoatCIMParser extends BasicParser {
 			// some values in the pipe delimited bluecoat cim logs contain pipes
 			// parse and remove them first to avoid problems parsing the rest of the string
 			String[] array;
+			array = handleValueContainingDelimiter(message, "url", "|dest=");
+			message = array[0];
+			payload.put("url", array[1]);
+			array = handleValueContainingDelimiter(message, "uri_path", "|uri_query=");
+			message = array[0];
+			payload.put("uri_path", array[1]);
 			array = handleValueContainingDelimiter(message, "uri_query", "|uri_extension=");
 			message = array[0];
 			payload.put("uri_query", array[1]);
@@ -99,12 +105,17 @@ public class BasicBluecoatCIMParser extends BasicParser {
 
 	@SuppressWarnings("unchecked")
 	private String[] handleValueContainingDelimiter(String message, String key, String nextKey){
-		int keyStart = message.indexOf(key);
-		int valueStart = keyStart + key.length() + 1;
-		int valueEnd = message.indexOf(nextKey);
-		String value = message.substring(valueStart,valueEnd);
-		String newMessage = message.substring(0, keyStart - 1) + message.substring(valueEnd);
-		return new String[] {newMessage, value};
+		if (message.contains(key)){
+			int keyStart = message.indexOf(key);
+			int valueStart = keyStart + key.length() + 1;
+			int valueEnd = message.indexOf(nextKey);
+			String value = message.substring(valueStart,valueEnd);
+			String newMessage = message.substring(0, keyStart - 1) + message.substring(valueEnd);
+			return new String[] {newMessage, value};
+		}
+		else {
+			return new String[] {message, "-"};
+		}
 	}
 
 	@SuppressWarnings("unchecked")
