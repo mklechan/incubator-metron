@@ -196,7 +196,6 @@ public class WindowsSyslogParserTest {
 		assertEquals(json.get("security_id"), "ABC");
 		assertEquals(json.get("subjectAccountName"), "-");
 		assertEquals(json.get("newLogonAccountName"), "ABC");
-		assertEquals(json.get("message"), getRealLineMessageForTesting());
 
 	}
 

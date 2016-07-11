@@ -112,12 +112,8 @@ public class WindowsSyslogParser extends BasicParser {
 		try {
 			ArrayList<String> results = getWindowsSyslogString(fileName);
 
-			toReturn.put("original_string", results.get(0)  + results.get(1));
-
 			String windowsSyslogString = handleAndRemoveFirstLine(toReturn, results.get(0));
 			String message = results.get(1);
-
-			toReturn.put("message", message.replaceFirst("Message=", "")); // remove the header before adding the message
 
 			BufferedReader br = new BufferedReader(new StringReader(windowsSyslogString));
 			String line;
