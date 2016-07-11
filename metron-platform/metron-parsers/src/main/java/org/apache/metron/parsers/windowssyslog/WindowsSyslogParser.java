@@ -134,7 +134,11 @@ public class WindowsSyslogParser extends BasicParser {
 			boolean securityID = false;
 			boolean subjectAccountName = false;
 			boolean newLogonAccountName = false;
-
+			boolean authPackage = false;
+			boolean logonProcess = false;
+			boolean sourceAddress = false;
+			boolean keyLength = false;
+			boolean packageName = false;
 			for(int i = 0; i < fields.length; i++) {
 				if (fields[i].contains("Logon Type")) {
 					String value = "";
@@ -143,11 +147,45 @@ public class WindowsSyslogParser extends BasicParser {
 					logonType = true;
 				}
 
-				if (fields[i].contains("Security ID") && fields[i].contains("COF\\")) {
+				if (fields[i].contains("Security ID")) {
 					String value = "";
-					value = fields[i].substring(fields[i].indexOf("COF\\")+4,fields[i].length());
-					toReturn.put("security_id", value.replaceAll("\\s+",""));
+					value = fields[i].substring(fields[i].indexOf(":")+1,fields[i].length());
+					toReturn.put("security_id", value.replaceAll("\t",""));
 					securityID = true;
+				}
+
+				if (fields[i].contains("Authentication Package")) {
+					String value = "";
+					value = fields[i].substring(fields[i].indexOf(":")+1,fields[i].length());
+					toReturn.put("authentication_package", value.replaceAll("\t",""));
+					authPackage = true;
+				}
+
+				if (fields[i].contains("Source Network Address")) {
+					String value = "";
+					value = fields[i].substring(fields[i].indexOf(":")+1,fields[i].length());
+					toReturn.put("source_address", value.replaceAll("\t",""));
+					sourceAddress = true;
+				}
+
+				if (fields[i].contains("Package Name")) {
+					String value = "";
+					value = fields[i].substring(fields[i].indexOf(":")+1,fields[i].length());
+					toReturn.put("package_name_ntlm", value.replaceAll("\t",""));
+					packageName = true;
+				}
+				if (fields[i].contains("Key Length")) {
+					String value = "";
+					value = fields[i].substring(fields[i].indexOf(":")+1,fields[i].length());
+					toReturn.put("key_length", value.replaceAll("\t",""));
+					keyLength = true;
+				}
+
+				if (fields[i].contains("Logon Process")) {
+					String value = "";
+					value = fields[i].substring(fields[i].indexOf(":")+1,fields[i].length());
+					toReturn.put("logon_process", value.replaceAll("\t",""));
+					logonProcess = true;
 				}
 
 				if (fields[i].contains("Account Name") && subjectAccountName==true && newLogonAccountName==false) {
@@ -169,6 +207,21 @@ public class WindowsSyslogParser extends BasicParser {
 			}
 			if(securityID == false) {
 				toReturn.put("security_id", "");
+			}
+			if(authPackage == false) {
+				toReturn.put("authentication_package", "");
+			}
+			if(logonProcess == false) {
+				toReturn.put("logon_process", "");
+			}
+			if(sourceAddress == false) {
+				toReturn.put("source_address","");
+			}
+			if(packageName == false) {
+				toReturn.put("package_name","");
+			}
+			if(keyLength == false) {
+				toReturn.put("key_length","");
 			}
 			if(subjectAccountName == false) {
 				toReturn.put("subjectAccountName", "");

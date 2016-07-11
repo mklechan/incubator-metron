@@ -161,7 +161,6 @@ public class WindowsSyslogParserTest {
 		JSONObject json = parsedJSON;
 
 
-
 		// ensure json is not null
 		assertNotNull(json);
 		// ensure json is not empty
@@ -193,8 +192,13 @@ public class WindowsSyslogParserTest {
 		assertEquals(json.get("record_number"), "112720121");
 		assertEquals(json.get("keywords"), "Audit Success");
 		assertEquals(json.get("logon_type"), "3");
-		assertEquals(json.get("security_id"), "ABC");
+		assertEquals(json.get("security_id"), "COF\\ABC");
 		assertEquals(json.get("subjectAccountName"), "-");
+		assertEquals(json.get("source_address"), "10.0.0.0");
+		assertEquals(json.get("authentication_package"), "Kerberos");
+		assertEquals(json.get("logon_process"),"Kerberos");
+		assertEquals(json.get("package_name_ntlm"), "-");
+		assertEquals(json.get("key_length"),"0");
 		assertEquals(json.get("newLogonAccountName"), "ABC");
 
 	}
